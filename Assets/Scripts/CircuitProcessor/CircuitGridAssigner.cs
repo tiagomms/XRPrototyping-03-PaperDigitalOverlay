@@ -52,7 +52,7 @@ namespace CircuitProcessor
                         value = c.value,
                         gridPosition = positionsMap[c.id],
                         asciiPosition = Vector2Int.zero, // Placeholder for Step 3
-                        pixelPosition = Vector2.zero
+                        rectPosition = Vector2.zero
                     };
                     updatedComponents.Add(updatedComp);
                     XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Updated component {c.id} with grid position {positionsMap[c.id]}");
@@ -276,8 +276,8 @@ namespace CircuitProcessor
                 toGrid = end,
                 fromASCII = Vector2Int.zero, // ASCII position placeholder
                 toASCII = Vector2Int.zero,   // ASCII position placeholder
-                fromPixel = Vector2.zero,
-                toPixel = Vector2.zero,
+                fromRect = Vector2.zero,
+                toRect = Vector2.zero,
                 isHorizontal = start.y == end.y
             };
         }

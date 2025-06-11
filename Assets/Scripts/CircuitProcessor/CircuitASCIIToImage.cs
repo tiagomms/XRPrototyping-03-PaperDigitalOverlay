@@ -77,7 +77,7 @@ namespace CircuitProcessor
             startY = (imgHeight - textHeight) / 2;
 
             // Update component and wire pixel positions
-            UpdatePixelPositions(circuitData);
+            UpdateRectPositions(circuitData);
 
             // Create texture and draw text
             Texture2D texture = CreateTextureWithASCII(imgWidth, imgHeight, circuitData.ascii);
@@ -179,7 +179,7 @@ namespace CircuitProcessor
         /// <summary>
         /// Converts ASCII coordinates to pixel coordinates
         /// </summary>
-        private Vector2Int AsciiToPixel(int asciiX, int asciiY)
+        private Vector2Int AsciitoRect(int asciiX, int asciiY)
         {
             int baseX = startX + asciiX * charWidth;
             int baseY = startY + asciiY * lineHeight;
@@ -194,23 +194,23 @@ namespace CircuitProcessor
         /// <summary>
         /// Updates pixel positions for components and wires
         /// </summary>
-        private void UpdatePixelPositions(CircuitData circuitData)
+        private void UpdateRectPositions(CircuitData circuitData)
         {
             // Update component positions
             foreach (var component in circuitData.components)
             {
-                Vector2Int pixelPos = AsciiToPixel(component.asciiPosition.x, component.asciiPosition.y);
-                component.pixelPosition = new Vector2(pixelPos.x, pixelPos.y);
+                Vector2Int pixelPos = AsciitoRect(component.asciiPosition.x, component.asciiPosition.y);
+                component.rectPosition = new Vector2(pixelPos.x, pixelPos.y);
             }
 
             // Update wire positions
             foreach (var wire in circuitData.wires)
             {
-                Vector2Int fromPixel = AsciiToPixel(wire.fromASCII.x, wire.fromASCII.y);
-                Vector2Int toPixel = AsciiToPixel(wire.toASCII.x, wire.toASCII.y);
+                Vector2Int fromRect = AsciitoRect(wire.fromASCII.x, wire.fromASCII.y);
+                Vector2Int toRect = AsciitoRect(wire.toASCII.x, wire.toASCII.y);
                 
-                wire.fromPixel = new Vector2(fromPixel.x, fromPixel.y);
-                wire.toPixel = new Vector2(toPixel.x, toPixel.y);
+                wire.fromRect = new Vector2(fromRect.x, fromRect.y);
+                wire.toRect = new Vector2(toRect.x, toRect.y);
             }
         }
 

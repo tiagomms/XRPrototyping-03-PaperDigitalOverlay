@@ -12,7 +12,7 @@ This step receives the JSON with the structural circuit plan and returns a fully
   - to all `components`:
     - `gridPosition`
     - `asciiPosition` (placeholder, calculated in Step 3)
-    - `pixelPosition` placeholder
+    - `rectPosition` placeholder
   - `wires` array: with routing, metadata, and from/to positions
 
 ### ✅ Component Grid Mapping
@@ -33,10 +33,10 @@ This reflects the logical layout of the circuit, not the visual position.
 Each component **must** also include:
 
 * `asciiPosition`: placeholder with default value `[0, 0]`. Actual values are calculated in Step 3.
-* `pixelPosition`: calculated later (in Step 4), but placeholder must be present with default value of `[0, 0]` in this step. Actual values are calculated in Step 4.
+* `rectPosition`: calculated later (in Step 4), but placeholder must be present with default value of `[0, 0]` in this step. Actual values are calculated in Step 4.
 
 > Step 3 will compute an `asciiPosition` per component, based strictly on each element's `gridPosition`. This mapping is deterministic.
-> Step 4 will compute a `pixelPosition` per component, based strictly on each element's `asciiPosition`. This mapping is deterministic.
+> Step 4 will compute a `rectPosition` per component, based strictly on each element's `asciiPosition`. This mapping is deterministic.
 
 ---
 
@@ -72,10 +72,10 @@ If a wire needs to make an L-shaped path, it must be split into **two orthogonal
 Each wire must connect components using their `gridPosition`, and also include:
 - `fromGrid` and `toGrid`
 - `fromASCII` and `toASCII` (placeholders with default value `[0, 0]`, calculated in Step 3)
-- `fromPixel` and `toPixel` (placeholders at this stage)
+- `fromRect` and `toRect` (placeholders at this stage)
 
 > Step 3 will compute `fromASCII` and `toASCII` per wire, based strictly on each element's `fromGrid` and `toGrid` respectively. This mapping is deterministic.
-> Step 4 will compute a `fromPixel` and `toPixel` per wire, based strictly on each element's `fromASCII` and `toASCII` respectively. This mapping is deterministic.
+> Step 4 will compute a `fromRect` and `toRect` per wire, based strictly on each element's `fromASCII` and `toASCII` respectively. This mapping is deterministic.
 
 * Wires must connect only between defined `gridPosition` components
 * Diagonal paths must be broken into at least three orthogonal wires (horizontal + vertical + horizontal)
@@ -156,8 +156,8 @@ All wires must follow this logic regardless of merge/fork presence.
   "toGrid": [x2, y2],
   "fromASCII": [00 b1],  // derived in Step 3
   "toASCII": [0 0],    // derived in Step 3
-  "fromPixel": [px1, py1], // derived in Step 4
-  "toPixel": [px2, py2]    // derived in Step 4
+  "fromRect": [px1, py1], // derived in Step 4
+  "toRect": [px2, py2]    // derived in Step 4
   "isHorizontal": true/false,
   "startTouchesComponent": true/false,
   "endTouchesComponent": true/false,
@@ -167,7 +167,7 @@ All wires must follow this logic regardless of merge/fork presence.
 
 ### 🔄 Positional Field Notes (Clarification)
 
-- `pixelPosition`, `fromPixel`, and `toPixel` fields are **placeholders only** in Step 2.  
+- `rectPosition`, `fromRect`, and `toRect` fields are **placeholders only** in Step 2.  
   These values will be computed in **Step 4** after pixel coordinate extraction and scaling.
 
 - `asciiPosition` is a placeholder in Step 2 with default value `[0, 0]`.
@@ -198,13 +198,13 @@ Grid positions:
 
 {
 "components": [
-{ "id": "V01", "type": "battery", "gridPosition": [0,0], "asciiPosition": [0,0], "pixelPosition": [0,0] },
-{ "id": "R01", "type": "resistor", "gridPosition": [1,0], "asciiPosition": [0,0], "pixelPosition": [0,0] },
-{ "id": "L01", "type": "lightbulb", "gridPosition": [2,0], "asciiPosition": [0,0], "pixelPosition": [0,0] }
+{ "id": "V01", "type": "battery", "gridPosition": [0,0], "asciiPosition": [0,0], "rectPosition": [0,0] },
+{ "id": "R01", "type": "resistor", "gridPosition": [1,0], "asciiPosition": [0,0], "rectPosition": [0,0] },
+{ "id": "L01", "type": "lightbulb", "gridPosition": [2,0], "asciiPosition": [0,0], "rectPosition": [0,0] }
 ],
 "wires": [
-{ "id": "W01", "fromGrid": [0,0], "toGrid": [1,0], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": true, "connectsToComponentStart": true, "connectsToComponentEnd": true, "isPartOfFork": false, "isPartOfMerge": false },
-{ "id": "W02", "fromGrid": [1,0], "toGrid": [2,0], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": true, "connectsToComponentStart": true, "connectsToComponentEnd": true, "isPartOfFork": false, "isPartOfMerge": false }
+{ "id": "W01", "fromGrid": [0,0], "toGrid": [1,0], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": true, "connectsToComponentStart": true, "connectsToComponentEnd": true, "isPartOfFork": false, "isPartOfMerge": false },
+{ "id": "W02", "fromGrid": [1,0], "toGrid": [2,0], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": true, "connectsToComponentStart": true, "connectsToComponentEnd": true, "isPartOfFork": false, "isPartOfMerge": false }
 ]
 }
 
@@ -236,22 +236,22 @@ Grid positions:
 
 {
 "components": [
-{ "id": "V01", "type": "battery", "value": 5, "gridPosition": [0,1], "asciiPosition": [0,0], "pixelPosition": [0,0] },
-{ "id": "R01", "type": "resistor", "value": 10, "gridPosition": [2,0], "asciiPosition": [0,0], "pixelPosition": [0,0] },
-{ "id": "R02", "type": "resistor", "value": 10, "gridPosition": [2,2], "asciiPosition": [0,0], "pixelPosition": [0,0] },
-{ "id": "L01", "type": "lightbulb", "value": 0, "gridPosition": [4,1], "asciiPosition": [0,0], "pixelPosition": [0,0] }
+{ "id": "V01", "type": "battery", "value": 5, "gridPosition": [0,1], "asciiPosition": [0,0], "rectPosition": [0,0] },
+{ "id": "R01", "type": "resistor", "value": 10, "gridPosition": [2,0], "asciiPosition": [0,0], "rectPosition": [0,0] },
+{ "id": "R02", "type": "resistor", "value": 10, "gridPosition": [2,2], "asciiPosition": [0,0], "rectPosition": [0,0] },
+{ "id": "L01", "type": "lightbulb", "value": 0, "gridPosition": [4,1], "asciiPosition": [0,0], "rectPosition": [0,0] }
 ],
 "wires": [
-{ "id": "W01", "fromGrid": [0,1], "toGrid": [1,1], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": true, "startTouchesComponent": true, "endTouchesComponent": false, "isPartOfFork": true, "isPartOfMerge": false },
-{ "id": "W02", "fromGrid": [1,1], "toGrid": [1,0], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": false },
-{ "id": "W03", "fromGrid": [1,1], "toGrid": [1,2], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": false },
-{ "id": "W04", "fromGrid": [1,0], "toGrid": [2,0], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": true, "startTouchesComponent": false, "endTouchesComponent": true, "isPartOfFork": false, "isPartOfMerge": false },
-{ "id": "W05", "fromGrid": [1,2], "toGrid": [2,2], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": true, "startTouchesComponent": false, "endTouchesComponent": true, "isPartOfFork": false, "isPartOfMerge": false },
-{ "id": "W06", "fromGrid": [2,0], "toGrid": [3,0], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": true, "startTouchesComponent": true, "endTouchesComponent": false, "isPartOfFork": false, "isPartOfMerge": false },
-{ "id": "W07", "fromGrid": [2,2], "toGrid": [3,2], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": true, "startTouchesComponent": true, "endTouchesComponent": false, "isPartOfFork": false, "isPartOfMerge": false },
-{ "id": "W08", "fromGrid": [3,0], "toGrid": [3,1], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": false },
-{ "id": "W09", "fromGrid": [3,2], "toGrid": [3,1], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": false },
-{ "id": "W10", "fromGrid": [3,1], "toGrid": [4,1], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": true, "startTouchesComponent": false, "endTouchesComponent": true, "isPartOfFork": false, "isPartOfMerge": true }
+{ "id": "W01", "fromGrid": [0,1], "toGrid": [1,1], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": true, "startTouchesComponent": true, "endTouchesComponent": false, "isPartOfFork": true, "isPartOfMerge": false },
+{ "id": "W02", "fromGrid": [1,1], "toGrid": [1,0], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": false },
+{ "id": "W03", "fromGrid": [1,1], "toGrid": [1,2], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": false },
+{ "id": "W04", "fromGrid": [1,0], "toGrid": [2,0], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": true, "startTouchesComponent": false, "endTouchesComponent": true, "isPartOfFork": false, "isPartOfMerge": false },
+{ "id": "W05", "fromGrid": [1,2], "toGrid": [2,2], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": true, "startTouchesComponent": false, "endTouchesComponent": true, "isPartOfFork": false, "isPartOfMerge": false },
+{ "id": "W06", "fromGrid": [2,0], "toGrid": [3,0], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": true, "startTouchesComponent": true, "endTouchesComponent": false, "isPartOfFork": false, "isPartOfMerge": false },
+{ "id": "W07", "fromGrid": [2,2], "toGrid": [3,2], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": true, "startTouchesComponent": true, "endTouchesComponent": false, "isPartOfFork": false, "isPartOfMerge": false },
+{ "id": "W08", "fromGrid": [3,0], "toGrid": [3,1], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": false },
+{ "id": "W09", "fromGrid": [3,2], "toGrid": [3,1], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": false },
+{ "id": "W10", "fromGrid": [3,1], "toGrid": [4,1], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": true, "startTouchesComponent": false, "endTouchesComponent": true, "isPartOfFork": false, "isPartOfMerge": true }
 ],
   "formula": "V01 / (1 / (1/R01 + 1/R02) + L01)",
   "verbalPlan": "V01 → [ R01 || R02 ] → L01 → return",
@@ -284,28 +284,28 @@ Grid positions:
 
 {
   "components": [
-    { "id": "V01", "type": "battery", "value": 5, "gridPosition": [0,1], "asciiPosition": [0,0], "pixelPosition": [0,0] },
-    { "id": "R01", "type": "resistor", "value": 10, "gridPosition": [2,0], "asciiPosition": [0,0], "pixelPosition": [0,0] },
-    { "id": "R02", "type": "resistor", "value": 10, "gridPosition": [2,1], "asciiPosition": [0,0], "pixelPosition": [0,0] },
-    { "id": "R03", "type": "resistor", "value": 10, "gridPosition": [2,2], "asciiPosition": [0,0], "pixelPosition": [0,0] },
-    { "id": "L01", "type": "lightbulb", "value": 0, "gridPosition": [4,1], "asciiPosition": [0,0], "pixelPosition": [0,0] }
+    { "id": "V01", "type": "battery", "value": 5, "gridPosition": [0,1], "asciiPosition": [0,0], "rectPosition": [0,0] },
+    { "id": "R01", "type": "resistor", "value": 10, "gridPosition": [2,0], "asciiPosition": [0,0], "rectPosition": [0,0] },
+    { "id": "R02", "type": "resistor", "value": 10, "gridPosition": [2,1], "asciiPosition": [0,0], "rectPosition": [0,0] },
+    { "id": "R03", "type": "resistor", "value": 10, "gridPosition": [2,2], "asciiPosition": [0,0], "rectPosition": [0,0] },
+    { "id": "L01", "type": "lightbulb", "value": 0, "gridPosition": [4,1], "asciiPosition": [0,0], "rectPosition": [0,0] }
   ],
   "wires": [
-    { "id": "W01", "fromGrid": [0,1], "toGrid": [1,1], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0],
+    { "id": "W01", "fromGrid": [0,1], "toGrid": [1,1], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0],
       "isHorizontal": true, "startTouchesComponent": true, "endTouchesComponent": false, "isPartOfFork": true, "isPartOfMerge": false },
-    { "id": "W02", "fromGrid": [1,1], "toGrid": [1,0], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": false },
-    { "id": "W03", "fromGrid": [1,1], "toGrid": [1,2], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": false },
-    { "id": "W04", "fromGrid": [1,0], "toGrid": [2,0], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0],
+    { "id": "W02", "fromGrid": [1,1], "toGrid": [1,0], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": false },
+    { "id": "W03", "fromGrid": [1,1], "toGrid": [1,2], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": false },
+    { "id": "W04", "fromGrid": [1,0], "toGrid": [2,0], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0],
       "isHorizontal": true, "startTouchesComponent": false, "endTouchesComponent": true, "isPartOfFork": false, "isPartOfMerge": false },
-    { "id": "W05", "fromGrid": [1,2], "toGrid": [2,2], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0],
+    { "id": "W05", "fromGrid": [1,2], "toGrid": [2,2], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0],
       "isHorizontal": true, "startTouchesComponent": false, "endTouchesComponent": true, "isPartOfFork": false, "isPartOfMerge": false },
-    { "id": "W06", "fromGrid": [2,0], "toGrid": [3,0], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0],
+    { "id": "W06", "fromGrid": [2,0], "toGrid": [3,0], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0],
       "isHorizontal": true, "startTouchesComponent": true, "endTouchesComponent": false, "isPartOfFork": false, "isPartOfMerge": false },
-    { "id": "W07", "fromGrid": [2,2], "toGrid": [3,2], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0],
+    { "id": "W07", "fromGrid": [2,2], "toGrid": [3,2], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0],
       "isHorizontal": true, "startTouchesComponent": true, "endTouchesComponent": false, "isPartOfFork": false, "isPartOfMerge": false },
-    { "id": "W08", "fromGrid": [3,0], "toGrid": [3,1], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": false },
-    { "id": "W09", "fromGrid": [3,2], "toGrid": [3,1], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0], "isHorizontal": false },
-    { "id": "W10", "fromGrid": [3,1], "toGrid": [4,1], "fromASCII": [0,0], "toASCII": [0,0], "fromPixel": [0,0], "toPixel": [0,0],
+    { "id": "W08", "fromGrid": [3,0], "toGrid": [3,1], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": false },
+    { "id": "W09", "fromGrid": [3,2], "toGrid": [3,1], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": false },
+    { "id": "W10", "fromGrid": [3,1], "toGrid": [4,1], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0],
       "isHorizontal": true, "startTouchesComponent": false, "endTouchesComponent": true, "isPartOfFork": false, "isPartOfMerge": true }
   ],
   "formula": "V01 / (1 / (1/(R01 + R02) + 1/R03) + L01)",

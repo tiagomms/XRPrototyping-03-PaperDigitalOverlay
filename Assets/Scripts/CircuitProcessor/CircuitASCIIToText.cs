@@ -61,7 +61,7 @@ namespace CircuitProcessor
 
             targetCanvas.gameObject.SetActive(true);
             SetupDisplay();
-            UpdatePixelPositions();
+            UpdateRectPositions();
         }
 
         void SetupDisplay()
@@ -132,15 +132,15 @@ namespace CircuitProcessor
             return sb.ToString();
         }
 
-        void UpdatePixelPositions()
+        void UpdateRectPositions()
         {
             if (circuitData == null) return;
 
             // Update component pixel positions
             foreach (var component in circuitData.components)
             {
-                Vector2 pixelPos = ASCIIToPixelPosition(component.asciiPosition.x, component.asciiPosition.y);
-                component.pixelPosition = pixelPos;
+                Vector2 pixelPos = ASCIIToRectTransformPosition(component.asciiPosition.x, component.asciiPosition.y);
+                component.rectPosition = pixelPos;
 
                 if (showDebugMarkers)
                 {
@@ -151,11 +151,11 @@ namespace CircuitProcessor
             // Update wire pixel positions
             foreach (var wire in circuitData.wires)
             {
-                Vector2 fromPixel = ASCIIToPixelPosition(wire.fromASCII.x, wire.fromASCII.y);
-                Vector2 toPixel = ASCIIToPixelPosition(wire.toASCII.x, wire.toASCII.y);
+                Vector2 fromRect = ASCIIToRectTransformPosition(wire.fromASCII.x, wire.fromASCII.y);
+                Vector2 toRect = ASCIIToRectTransformPosition(wire.toASCII.x, wire.toASCII.y);
 
-                wire.fromPixel = fromPixel;
-                wire.toPixel = toPixel;
+                wire.fromRect = fromRect;
+                wire.toRect = toRect;
             }
 
             // Log some example conversions for verification
@@ -163,11 +163,11 @@ namespace CircuitProcessor
             for (int i = 0; i < Mathf.Min(3, circuitData.components.Count); i++)
             {
                 var component = circuitData.components[i];
-                Debug.Log($"{component.id}: ASCII [{component.asciiPosition.x}, {component.asciiPosition.y}] -> Pixel [{component.pixelPosition.x:F2}, {component.pixelPosition.y:F2}]");
+                Debug.Log($"{component.id}: ASCII [{component.asciiPosition.x}, {component.asciiPosition.y}] -> Pixel [{component.rectPosition.x:F2}, {component.rectPosition.y:F2}]");
             }
         }
 
-        Vector2 ASCIIToPixelPosition(int asciiX, int asciiY)
+        Vector2 ASCIIToRectTransformPosition(int asciiX, int asciiY)
         {
             if (asciiX < 0 || asciiX >= circuitData.asciiSize.x ||
                 asciiY < 0 || asciiY >= circuitData.asciiSize.y)
@@ -261,17 +261,5 @@ namespace CircuitProcessor
         {
             return circuitData;
         }
-
-        /*
-        void OnValidate()
-        {
-            // Refresh display when values change in editor
-            if (Application.isPlaying && circuitText != null)
-            {
-                SetupDisplay();
-                UpdatePixelPositions();
-            }
-        }
-        */
     }
 }

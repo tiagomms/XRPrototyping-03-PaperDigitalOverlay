@@ -19,7 +19,7 @@ namespace CircuitProcessor
         public float value;
         public Vector2Int gridPosition;
         public Vector2Int asciiPosition;
-        public Vector2 pixelPosition;  // Position in pixels
+        public Vector2 rectPosition;  // Position in pixels
     }
 
     /// <summary>
@@ -33,8 +33,8 @@ namespace CircuitProcessor
         public Vector2Int toGrid;
         public Vector2Int fromASCII;
         public Vector2Int toASCII;
-        public Vector2 fromPixel;  // Position in pixels
-        public Vector2 toPixel;    // Position in pixels
+        public Vector2 fromRect;  // Position in pixels
+        public Vector2 toRect;    // Position in pixels
         public bool isHorizontal;
         public bool startTouchesComponent;
         public bool endTouchesComponent;

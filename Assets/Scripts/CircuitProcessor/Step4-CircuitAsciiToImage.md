@@ -13,8 +13,8 @@ Transform the ASCII circuit diagram from Step 3 into a high-quality image while 
 
 📤 **Output:**
 To our input JSON structure, add:
-- `components[*].pixelPosition`: [x, y] coordinates in pixels
-- `wires[*].fromPixel` and `wires[*].toPixel`: [x, y] coordinates in pixels
+- `components[*].rectPosition`: [x, y] coordinates in pixels
+- `wires[*].fromRect` and `wires[*].toRect`: [x, y] coordinates in pixels
 - `imageResolution`: [width, height] dimensions of the output image in pixels
 - A PNG image file containing the rendered ASCII diagram
 
@@ -114,7 +114,7 @@ The following rules are now canon:
     {
       "id": "V01",
       "asciiPosition": [5, 2],
-      "pixelPosition": [150, 72]  // Example pixel coordinates
+      "rectPosition": [150, 72]  // Example pixel coordinates
     }
   ],
   "wires": [
@@ -122,8 +122,8 @@ The following rules are now canon:
       "id": "W01",
       "fromASCII": [5, 3],
       "toASCII": [10, 3],
-      "fromPixel": [150, 108],    // Example pixel coordinates
-      "toPixel": [300, 108]       // Example pixel coordinates
+      "fromRect": [150, 108],    // Example pixel coordinates
+      "toRect": [300, 108]       // Example pixel coordinates
     }
   ],
   "asciiSize": [30, 8],           // Dimensions of ASCII canvas
