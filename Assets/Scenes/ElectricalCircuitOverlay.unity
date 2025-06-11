@@ -18523,7 +18523,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5518670934586006478, guid: 8f403dcd176949148ab24331defe47fb, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 217.00084
+      value: 217
       objectReference: {fileID: 0}
     - target: {fileID: 6204767134508456339, guid: 8f403dcd176949148ab24331defe47fb, type: 3}
       propertyPath: m_AnchorMax.y
@@ -20433,6 +20433,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1862826181}
   - {fileID: 1644237245}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -20729,12 +20730,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1862826178}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.5945496, y: -2.1351755, z: 19.677969}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 2.0385497, y: -3.1351755, z: 19.677969}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1829654522}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1862826183
 MonoBehaviour:
@@ -20779,8 +20780,9 @@ MonoBehaviour:
   circuitText: {fileID: 574848995}
   componentColor: {r: 0, g: 1, b: 0, a: 1}
   wireColor: {r: 1, g: 1, b: 1, a: 1}
-  showDebugMarkers: 0
+  showDebugMarkers: 1
   debugMarkerColor: {r: 1, g: 0, b: 0, a: 1}
+  markersParent: {fileID: 1177789614}
 --- !u!1 &1863249666
 GameObject:
   m_ObjectHideFlags: 0
@@ -24545,5 +24547,4 @@ SceneRoots:
   - {fileID: 965326226}
   - {fileID: 1751954365}
   - {fileID: 1964068519}
-  - {fileID: 1862826181}
   - {fileID: 1829654522}

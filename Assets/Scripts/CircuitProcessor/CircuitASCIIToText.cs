@@ -20,6 +20,7 @@ namespace CircuitProcessor
         [Header("Debug")]
         [SerializeField] private bool showDebugMarkers = false;
         [SerializeField] private Color debugMarkerColor = Color.red;
+        [SerializeField] private Transform markersParent;
 
         private CircuitData circuitData;
         private RectTransform canvasRect;
@@ -171,21 +172,29 @@ namespace CircuitProcessor
             if (asciiX < 0 || asciiX >= circuitData.asciiSize.x ||
                 asciiY < 0 || asciiY >= circuitData.asciiSize.y)
             {
+                XRDebugLogViewer.LogError($"[{nameof(CircuitASCIIToText)}] Invalid ASCII position: [{asciiX}, {asciiY}]");
                 return Vector2.zero;
             }
 
             // Get the character index in the text
             int charIndex = 0;
+            int maxLineLength = circuitData.ascii.Max(line => line.Length);
+
+            // Calculate total characters up to the target line
             for (int y = 0; y < asciiY; y++)
             {
-                charIndex += circuitData.ascii[y].Length + 1; // +1 for newline
+                charIndex += maxLineLength + 1; // +1 for newline
             }
+            // Add the x position
             charIndex += asciiX;
+
+            XRDebugLogViewer.Log($"[{nameof(CircuitASCIIToText)}] ASCII [{asciiX}, {asciiY}] -> charIndex: {charIndex}");
 
             // Get the character info from TMP
             TMP_TextInfo textInfo = circuitText.textInfo;
             if (textInfo == null || charIndex >= textInfo.characterCount)
             {
+                XRDebugLogViewer.LogError($"[{nameof(CircuitASCIIToText)}] Invalid character index: {charIndex} (total chars: {textInfo?.characterCount ?? 0})");
                 return Vector2.zero;
             }
 
@@ -193,6 +202,10 @@ namespace CircuitProcessor
             
             // Get the center position of the character in local space
             Vector3 charCenter = (charInfo.bottomLeft + charInfo.topRight) * 0.5f;
+            return new Vector2(charCenter.x, charCenter.y);
+            /*
+            XRDebugLogViewer.Log($"[{nameof(CircuitASCIIToText)}] ASCII [{asciiX}, {asciiY}] -> CharCenter [{charCenter.x:F2}, {charCenter.y:F2}]");
+
             Vector3 worldPos = circuitText.transform.TransformPoint(charCenter);
             
             // Convert to canvas local position
@@ -204,13 +217,15 @@ namespace CircuitProcessor
                 targetCanvas.worldCamera,
                 out localPos);
 
+            //XRDebugLogViewer.Log($"[{nameof(CircuitASCIIToText)}] ASCII [{asciiX}, {asciiY}] -> Pixel [{localPos.x:F2}, {localPos.y:F2}]");
             return localPos;
+            */
         }
 
         void CreateDebugMarker(Vector2 position, string label, Color color)
         {
             GameObject marker = new GameObject($"Debug_Marker_{label}");
-            marker.transform.SetParent(targetCanvas.transform, false);
+            marker.transform.SetParent(markersParent.transform, false);
 
             // Create marker using UI Image
             Image markerImage = marker.AddComponent<Image>();
@@ -218,8 +233,8 @@ namespace CircuitProcessor
             markerImage.raycastTarget = false;
 
             RectTransform markerRect = marker.GetComponent<RectTransform>();
-            markerRect.anchorMin = Vector2.zero;
-            markerRect.anchorMax = Vector2.zero;
+            markerRect.anchorMin = Vector2.one * 0.5f;
+            markerRect.anchorMax = Vector2.one * 0.5f;
             markerRect.pivot = new Vector2(0.5f, 0.5f);
             markerRect.anchoredPosition = position;
             markerRect.sizeDelta = new Vector2(10, 10);
