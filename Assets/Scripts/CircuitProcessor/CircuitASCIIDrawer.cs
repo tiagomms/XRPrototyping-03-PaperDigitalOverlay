@@ -153,18 +153,9 @@ namespace CircuitProcessor
             {
                 int cellStart = x1 + cell * ASCII_CELL_WIDTH;
 
-                // Determine LEFT_SYMBOL
-                char leftSymbol = (cell == 0 && wire.isPartOfMerge) ? '+' : '-';
-
-                // Determine RIGHT_SYMBOL
-                bool isLastCell = cell == numCells - 1;
-                char rightSymbol = (isLastCell && wire.isPartOfFork) ? '+' : '-';
-
-                // CENTER_FILLERS: always (cellWidth - 2) dashes
-                string centerFillers = new string('-', ASCII_CELL_WIDTH - 2);
-
-                // Construct wire: LEFT_SYMBOL + CENTER_FILLERS + RIGHT_SYMBOL
-                string wireString = leftSymbol + centerFillers + rightSymbol;
+                // All wire segments are now just dashes - no special symbols
+                // Components will overwrite with '+' where needed
+                string wireString = new string('-', ASCII_CELL_WIDTH);
 
                 // Draw the wire, but only if the position is empty
                 for (int i = 0; i < wireString.Length; i++)
@@ -194,6 +185,7 @@ namespace CircuitProcessor
             if (x >= canvasWidth)
                 return;
 
+            canvas[y1, x] = '-';
             // Draw vertical line between the two points, skipping the first character
             for (int y = startY + 1; y < endY; y++)
             {
@@ -216,39 +208,49 @@ namespace CircuitProcessor
             if (y >= canvasHeight || x >= canvasWidth)
                 return;
 
-            // Component ID must be exactly 3 characters
-            string compId = component.id;
-            if (compId.Length != 3)
+            // Check if this is a fork or merge component
+            if (component.type == "fork" || component.type == "merge")
             {
-                compId = compId.Length > 3 ? compId.Substring(0, 3) : compId.PadRight(3);
+                // For fork and merge, just place a '+' at the position (always overwrite)
+                canvas[y, x] = '+';
             }
-
-            // Place component ID above the ':' anchor (center-aligned)
-            int compY = y - 1;
-            if (compY >= 0)
+            else
             {
-                // Center-align the 3-character ID on the ':' position
-                int idStartX = x - 1;
-                for (int i = 0; i < compId.Length; i++)
+                // Regular component behavior
+                // Component ID must be exactly 3 characters
+                string compId = component.id;
+                if (compId.Length != 3)
                 {
-                    if (idStartX + i >= 0 && idStartX + i < canvasWidth)
+                    compId = compId.Length > 3 ? compId.Substring(0, 3) : compId.PadRight(3);
+                }
+
+                // Place component ID above the ':' anchor (center-aligned)
+                int compY = y - 1;
+                if (compY >= 0)
+                {
+                    // Center-align the 3-character ID on the ':' position
+                    int idStartX = x - 1;
+                    for (int i = 0; i < compId.Length; i++)
                     {
-                        // Check if we're modifying an existing wire segment
-                        if (canvas[compY, idStartX + i] != ' ')
+                        if (idStartX + i >= 0 && idStartX + i < canvasWidth)
                         {
-                            circuitData.violations.Add(new Violation
+                            // Check if we're modifying an existing wire segment
+                            if (canvas[compY, idStartX + i] != ' ')
                             {
-                                type = "component_overlay",
-                                message = $"Component {component.id} overlays existing content at position [{idStartX + i}, {compY}]"
-                            });
+                                circuitData.violations.Add(new Violation
+                                {
+                                    type = "component_overlay",
+                                    message = $"Component {component.id} overlays existing content at position [{idStartX + i}, {compY}]"
+                                });
+                            }
+                            canvas[compY, idStartX + i] = compId[i];
                         }
-                        canvas[compY, idStartX + i] = compId[i];
                     }
                 }
-            }
 
-            // Place the component anchor ':' (always overwrite whatever is there)
-            canvas[y, x] = ':';
+                // Place the component anchor ':' (always overwrite whatever is there)
+                canvas[y, x] = ':';
+            }
         }
     }
 }

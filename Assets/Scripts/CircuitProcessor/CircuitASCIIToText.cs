@@ -27,6 +27,7 @@ namespace CircuitProcessor
         private float charWidth;
         private float charHeight;
         private Vector2 startPosition;
+        private List<GameObject> debugMarkers = new List<GameObject>();
 
         void Start()
         {
@@ -52,6 +53,7 @@ namespace CircuitProcessor
         /// <param name="data">The circuit data to display</param>
         public void InitializeASCIIToText(CircuitData data)
         {
+            ClearDebugMarkers();
             circuitData = data;
             if (circuitData == null)
             {
@@ -222,10 +224,23 @@ namespace CircuitProcessor
             */
         }
 
+        void ClearDebugMarkers()
+        {
+            foreach (var marker in debugMarkers)
+            {
+                if (marker != null)
+                {
+                    Destroy(marker);
+                }
+            }
+            debugMarkers.Clear();
+        }
+
         void CreateDebugMarker(Vector2 position, string label, Color color)
         {
             GameObject marker = new GameObject($"Debug_Marker_{label}");
             marker.transform.SetParent(markersParent.transform, false);
+            debugMarkers.Add(marker);
 
             // Create marker using UI Image
             Image markerImage = marker.AddComponent<Image>();

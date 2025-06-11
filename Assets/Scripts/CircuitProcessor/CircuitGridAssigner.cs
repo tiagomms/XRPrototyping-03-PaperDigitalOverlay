@@ -36,46 +36,23 @@ namespace CircuitProcessor
             var orderedIds = ParseVerbalPlan(data.verbalPlan);
             XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Parsed {orderedIds.Count} components from verbal plan");
 
-            var positionsMap = AssignPositions(orderedIds);
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Assigned positions to {positionsMap.Count} components");
+            // Process the verbal plan and create components with fork/merge nodes
+            var allComponents = ProcessVerbalPlanWithForkMerge(orderedIds, data.components);
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Created {allComponents.Count} total components (including forks/merges)");
 
-            // Update components with positions while preserving original properties
-            var updatedComponents = new List<Component>();
-            foreach (var c in data.components)
-            {
-                if (positionsMap.ContainsKey(c.id))
-                {
-                    var updatedComp = new Component
-                    {
-                        id = c.id,
-                        type = c.type,
-                        value = c.value,
-                        gridPosition = positionsMap[c.id],
-                        asciiPosition = Vector2Int.zero, // Placeholder for Step 3
-                        rectPosition = Vector2.zero
-                    };
-                    updatedComponents.Add(updatedComp);
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Updated component {c.id} with grid position {positionsMap[c.id]}");
-                }
-                else
-                {
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] WARNING: Component {c.id} not found in positions map");
-                }
-            }
-
-            // Generate wires
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Starting wire generation for {updatedComponents.Count} components");
-            var wires = GenerateWires(updatedComponents);
+            // Generate wires after all components are positioned
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Starting wire generation for {allComponents.Count} components");
+            var wires = GenerateWires(allComponents);
             XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Generated {wires.Count} wires");
 
-            // STEP: Normalize all grid positions so minimum is 0 on both axes
-            NormalizeGridPositions(updatedComponents, wires);
+            // Normalize all grid positions so minimum is 0 on both axes
+            NormalizeGridPositions(allComponents, wires);
             XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Normalized all grid positions");
 
             // Create final output by copying all original data
             var finalOutput = new CircuitData
             {
-                components = updatedComponents,
+                components = allComponents,
                 wires = wires,
                 formula = data.formula,
                 verbalPlan = data.verbalPlan,
@@ -155,7 +132,7 @@ namespace CircuitProcessor
         }
 
         /// <summary>
-        /// Parses the verbal plan into an ordered list of component IDs
+        /// Parses the verbal plan into an ordered list of component IDs and parallel branch tokens
         /// </summary>
         private List<string> ParseVerbalPlan(string plan)
         {
@@ -168,8 +145,7 @@ namespace CircuitProcessor
             // Replace arrow types with consistent delimiter
             plan = plan.Replace("→", "->").Replace("⇒", "->");
 
-            // TODO: actually return wires in the future (not now)
-            // NOTE: right now, just ignore the return part
+            // Remove return part if present
             plan = plan.Replace(" -> return", "");
             var tokens = plan.Split(new[] { "->" }, StringSplitOptions.RemoveEmptyEntries)
                             .Select(t => t.Trim())
@@ -190,78 +166,190 @@ namespace CircuitProcessor
         }
 
         /// <summary>
-        /// Parses components within a parallel branch
+        /// Parses components within a parallel branch and returns branches with their series components
         /// </summary>
-        private List<string> ParseParallelBranch(string token)
+        private List<List<string>> ParseParallelBranches(string token)
         {
-            // Remove brackets and split by parallel operator
+            // Remove brackets
             var inner = token.Trim('[', ']');
+            var branches = new List<List<string>>();
+
             if (inner.Contains("||"))
             {
-                return inner.Split(new[] { "||" }, StringSplitOptions.RemoveEmptyEntries)
-                           .Select(c => c.Trim())
-                           .ToList();
+                // Split by parallel operator
+                var parallelBranches = inner.Split(new[] { "||" }, StringSplitOptions.RemoveEmptyEntries)
+                                           .Select(b => b.Trim())
+                                           .ToList();
+
+                foreach (var branch in parallelBranches)
+                {
+                    // Each branch may contain series components separated by '+'
+                    if (branch.Contains("+"))
+                    {
+                        var seriesComponents = branch.Split(new[] { "+" }, StringSplitOptions.RemoveEmptyEntries)
+                                                   .Select(c => c.Trim())
+                                                   .ToList();
+                        branches.Add(seriesComponents);
+                    }
+                    else
+                    {
+                        branches.Add(new List<string> { branch.Trim() });
+                    }
+                }
             }
-            else if (inner.Contains("+"))
-            {
-                return inner.Split(new[] { "+" }, StringSplitOptions.RemoveEmptyEntries)
-                           .Select(c => c.Trim())
-                           .ToList();
-            }
-            return new List<string> { inner.Trim() };
+
+            return branches;
         }
 
         /// <summary>
-        /// Assigns grid positions based on verbal plan with parallel branch handling
+        /// Processes the verbal plan and creates all components including fork/merge nodes
         /// </summary>
-        private Dictionary<string, Vector2Int> AssignPositions(List<string> componentsOrder)
+        private List<Component> ProcessVerbalPlanWithForkMerge(List<string> tokens, List<Component> originalComponents)
         {
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Starting position assignment for {componentsOrder.Count} components");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Processing verbal plan with fork/merge logic");
             
-            var positions = new Dictionary<string, Vector2Int>();
+            var allComponents = new List<Component>();
+            var componentDict = originalComponents.ToDictionary(c => c.id, c => c);
             var currentX = 0;
             var currentY = 0;
+            var forkCounter = 1;
+            var mergeCounter = 1;
 
-            for (int i = 0; i < componentsOrder.Count; i++)
+            for (int i = 0; i < tokens.Count; i++)
             {
-                var token = componentsOrder[i];
+                var token = tokens[i];
+
                 if (IsParallelBranch(token))
                 {
                     XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Processing parallel branch: {token}");
-                    // Handle parallel branch
-                    var parallelComponents = ParseParallelBranch(token);
-                    var branchCount = parallelComponents.Count;
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Found {branchCount} parallel components");
+                    
+                    // Parse parallel branches
+                    var branches = ParseParallelBranches(token);
+                    var branchCount = branches.Count;
+                    var maxBranchLength = branches.Max(b => b.Count);
+                    
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Found {branchCount} branches, max length: {maxBranchLength}");
 
-                    // Add spacing for fork point
-                    currentX += 1;
-
-                    // Assign positions to parallel components at current_x
-                    for (int j = 0; j < parallelComponents.Count; j++)
+                    // Create fork node
+                    var forkId = $"F{forkCounter:D2}";
+                    var fork = new Component
                     {
-                        var compId = parallelComponents[j];
-                        // Calculate Y position based on number of branches
-                        var yOffset = (j * 2) - (branchCount - 1);
-                        positions[compId] = new Vector2Int(currentX, currentY + yOffset);
-                        XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Assigned position {positions[compId]} to parallel component {compId}");
+                        id = forkId,
+                        type = "fork",
+                        value = 0,
+                        gridPosition = new Vector2Int(currentX, currentY),
+                        asciiPosition = Vector2Int.zero,
+                        rectPosition = Vector2.zero
+                    };
+                    allComponents.Add(fork);
+                    forkCounter++;
+                    
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Created fork {forkId} at position {fork.gridPosition}");
+
+                    // Calculate Y positions for branches (symmetric around fork Y)
+                    var branchYPositions = new List<int>();
+                    if (branchCount == 1)
+                    {
+                        branchYPositions.Add(currentY);
+                    }
+                    else if (branchCount == 2)
+                    {
+                        branchYPositions.Add(currentY - 1);
+                        branchYPositions.Add(currentY + 1);
+                    }
+                    else
+                    {
+                        // FIXME: this logic is incorrect. fix later
+                        // For 3+ branches, distribute symmetrically
+                        int offset = (branchCount - 1) / 2;
+                        for (int j = 0; j < branchCount; j++)
+                        {
+                            branchYPositions.Add(currentY + (j - offset));
+                        }
                     }
 
-                    // Add spacing for merge point
-                    currentX += 2;
+                    // Place components in each branch
+                    for (int branchIndex = 0; branchIndex < branches.Count; branchIndex++)
+                    {
+                        var branch = branches[branchIndex];
+                        var branchY = branchYPositions[branchIndex];
+                        var branchX = currentX + 1; // Start after fork
+
+                        XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Processing branch {branchIndex} with {branch.Count} components at Y={branchY}");
+
+                        foreach (var compId in branch)
+                        {
+                            if (componentDict.ContainsKey(compId))
+                            {
+                                var originalComp = componentDict[compId];
+                                var branchComp = new Component
+                                {
+                                    id = originalComp.id,
+                                    type = originalComp.type,
+                                    value = originalComp.value,
+                                    gridPosition = new Vector2Int(branchX, branchY),
+                                    asciiPosition = Vector2Int.zero,
+                                    rectPosition = Vector2.zero
+                                };
+                                allComponents.Add(branchComp);
+                                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Placed component {compId} at position {branchComp.gridPosition}");
+                                branchX++; // Move to next X position for series components
+                            }
+                            else
+                            {
+                                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] WARNING: Component {compId} not found in original components");
+                            }
+                        }
+                    }
+
+                    // Create merge node
+                    var mergeX = currentX + maxBranchLength + 1;
+                    var mergeId = $"M{mergeCounter:D2}";
+                    var merge = new Component
+                    {
+                        id = mergeId,
+                        type = "merge",
+                        value = 0,
+                        gridPosition = new Vector2Int(mergeX, currentY),
+                        asciiPosition = Vector2Int.zero,
+                        rectPosition = Vector2.zero
+                    };
+                    allComponents.Add(merge);
+                    mergeCounter++;
+                    
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Created merge {mergeId} at position {merge.gridPosition}");
+
+                    // Update current X position (add +1 for spacing as per documentation)
+                    currentX = mergeX + 1;
                 }
                 else
                 {
                     // Handle series component
-                    positions[token] = new Vector2Int(currentX, currentY);
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Assigned position {positions[token]} to series component {token}");
-                    currentX += 1;
+                    if (componentDict.ContainsKey(token))
+                    {
+                        var originalComp = componentDict[token];
+                        var seriesComp = new Component
+                        {
+                            id = originalComp.id,
+                            type = originalComp.type,
+                            value = originalComp.value,
+                            gridPosition = new Vector2Int(currentX, currentY),
+                            asciiPosition = Vector2Int.zero,
+                            rectPosition = Vector2.zero
+                        };
+                        allComponents.Add(seriesComp);
+                        XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Placed series component {token} at position {seriesComp.gridPosition}");
+                        currentX += 1;
+                    }
+                    else
+                    {
+                        XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] WARNING: Component {token} not found in original components");
+                    }
                 }
             }
 
-            // NOTE: Grid normalization is now done at the end, after wire generation
-            // This allows parallel merges to be clearer during wire generation
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Completed position assignment for {positions.Count} components (normalization deferred)");
-            return positions;
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Completed processing. Created {allComponents.Count} total components");
+            return allComponents;
         }
 
         /// <summary>
@@ -319,47 +407,8 @@ namespace CircuitProcessor
         }
 
         /// <summary>
-        /// Analyzes wire connections to identify forks and merges
-        /// </summary>
-        private (Dictionary<(int, int), List<Wire>> from, Dictionary<(int, int), List<Wire>> to) AnalyzeWireConnections(List<Wire> wires)
-        {
-            var connections = (
-                from: new Dictionary<(int, int), List<Wire>>(),
-                to: new Dictionary<(int, int), List<Wire>>()
-            );
-
-            foreach (var wire in wires)
-            {
-                var fromKey = (wire.fromGrid.x, wire.fromGrid.y);
-                var toKey = (wire.toGrid.x, wire.toGrid.y);
-
-                if (!connections.from.ContainsKey(fromKey))
-                    connections.from[fromKey] = new List<Wire>();
-                if (!connections.to.ContainsKey(toKey))
-                    connections.to[toKey] = new List<Wire>();
-
-                connections.from[fromKey].Add(wire);
-                connections.to[toKey].Add(wire);
-            }
-
-            return connections;
-        }
-
-        /// <summary>
-        /// Determines if the circuit has any parallel branches
-        /// </summary>
-        private bool HasParallelBranches(List<Component> components)
-        {
-            // Group components by X position
-            var xGroups = components.GroupBy(c => c.gridPosition.x)
-                                  .ToDictionary(g => g.Key, g => g.ToList());
-            
-            // Check if any X position has more than one component
-            return xGroups.Any(group => group.Value.Count > 1);
-        }
-
-        /// <summary>
-        /// Generates wires between components based on their positions
+        /// Generates wires between components based on their positions and types
+        /// Fixed to prevent cross-branch connections
         /// </summary>
         private List<Wire> GenerateWires(List<Component> components)
         {
@@ -368,164 +417,151 @@ namespace CircuitProcessor
             var wires = new List<Wire>();
             var wireId = 1;
 
-            // Sort components by X position (and Y position for same X)
-            var sortedComponents = components.OrderBy(c => c.gridPosition.x)
-                                           .ThenBy(c => c.gridPosition.y)
-                                           .ToList();
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Sorted components by position");
+            // Separate components by type
+            var regularComponents = components.Where(c => c.type != "fork" && c.type != "merge").OrderBy(c => c.gridPosition.x).ThenBy(c => c.gridPosition.y).ToList();
+            var forks = components.Where(c => c.type == "fork").ToList();
+            var merges = components.Where(c => c.type == "merge").ToList();
 
-            // Group components by X position to identify parallel branches
-            var xGroups = sortedComponents.GroupBy(c => c.gridPosition.x)
-                                        .ToDictionary(g => g.Key, g => g.ToList());
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Grouped components into {xGroups.Count} X positions");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Found {regularComponents.Count} regular components, {forks.Count} forks, {merges.Count} merges");
 
-            // Check if circuit has parallel branches
-            bool hasParallelBranches = HasParallelBranches(components);
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Circuit has parallel branches: {hasParallelBranches}");
-
-            // Process each X position in order
-            var xPositions = xGroups.Keys.OrderBy(x => x).ToList();
-            for (int i = 0; i < xPositions.Count - 1; i++)
+            // 1. Connect regular components in series within the same branch (same Y coordinate)
+            for (int i = 0; i < regularComponents.Count; i++)
             {
-                var currentX = xPositions[i];
-                var nextX = xPositions[i + 1];
-                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Processing X positions {currentX} -> {nextX}");
+                var currentComp = regularComponents[i];
+                
+                // Find the next component in the same branch (same Y coordinate) and consecutive X position
+                var nextInBranch = regularComponents
+                    .Where(c => c.gridPosition.y == currentComp.gridPosition.y && // Same branch (Y coordinate)
+                            c.gridPosition.x == currentComp.gridPosition.x + 1) // Next X position
+                    .FirstOrDefault();
 
-                // Get components at current and next X positions
-                var currentComps = xGroups[currentX];
-                var nextComps = xGroups[nextX];
-
-                // If we have parallel branches at current X
-                if (currentComps.Count > 1)
+                if (nextInBranch != null)
                 {
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Processing parallel branch at X={currentX} with {currentComps.Count} components");
-                    // Create fork point at X+1
-                    var forkX = currentX + 1;
-                    var forkY = 1; // Middle Y position
+                    // Create horizontal wire within the same branch
+                    wires.Add(CreateWire(currentComp.gridPosition, nextInBranch.gridPosition, wireId++));
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Created series wire from {currentComp.id} to {nextInBranch.id}");
+                }
+            }
 
-                    // Connect each parallel component to fork point
-                    foreach (var comp in currentComps)
+            // 2. Connect components to forks
+            foreach (var fork in forks)
+            {
+                // Find component immediately before this fork, preferring same Y position
+                var prevComp = regularComponents
+                    .Where(c => c.gridPosition.x < fork.gridPosition.x)
+                    .OrderByDescending(c => c.gridPosition.x)
+                    .ThenBy(c => c.gridPosition.y == fork.gridPosition.y ? 0 : 1) // Prioritize same Y position
+                    .FirstOrDefault();
+
+                if (prevComp != null)
+                {
+                    // If Y positions are different, create a vertical wire first
+                    if (prevComp.gridPosition.y != fork.gridPosition.y)
                     {
-                        // Horizontal wire to fork point
+                        // Create vertical wire to align Y positions
                         wires.Add(CreateWire(
-                            comp.gridPosition,
-                            new Vector2Int(forkX, comp.gridPosition.y),
+                            prevComp.gridPosition,
+                            new Vector2Int(prevComp.gridPosition.x, fork.gridPosition.y),
                             wireId++
                         ));
-
-                        // Vertical wire to fork point
+                        // Then create horizontal wire to fork
                         wires.Add(CreateWire(
-                            new Vector2Int(forkX, comp.gridPosition.y),
-                            new Vector2Int(forkX, forkY),
+                            new Vector2Int(prevComp.gridPosition.x, fork.gridPosition.y),
+                            fork.gridPosition,
                             wireId++
                         ));
                     }
-
-                    // Connect fork point to next components
-                    foreach (var nextComp in nextComps)
+                    else
                     {
-                        // Horizontal wire from fork point
+                        // Direct horizontal connection if Y positions match
+                        wires.Add(CreateWire(prevComp.gridPosition, fork.gridPosition, wireId++));
+                    }
+                }
+
+                // Connect fork to components in parallel branches
+                var branchComponents = regularComponents.Where(c => c.gridPosition.x == fork.gridPosition.x + 1).ToList();
+                foreach (var branchComp in branchComponents)
+                {
+                    // Vertical wire from fork to branch level
+                    if (fork.gridPosition.y != branchComp.gridPosition.y)
+                    {
+                        wires.Add(CreateWire(fork.gridPosition, new Vector2Int(fork.gridPosition.x, branchComp.gridPosition.y), wireId++));
+                    }
+                    // Horizontal wire to component
+                    wires.Add(CreateWire(new Vector2Int(fork.gridPosition.x, branchComp.gridPosition.y), branchComp.gridPosition, wireId++));
+                }
+            }
+
+            // 3. Connect components to merges
+            foreach (var merge in merges)
+            {
+                // Extract fork number from merge ID (e.g., "M02" -> 2)
+                int mergeNumber = int.Parse(merge.id.Substring(1));
+                string forkId = $"F{mergeNumber:D2}";
+                
+                // Find the corresponding fork
+                var fork = forks.FirstOrDefault(f => f.id == forkId);
+                if (fork == null)
+                {
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] WARNING: No matching fork found for merge {merge.id}");
+                    continue;
+                }
+
+                // Get all components between fork and merge
+                var branchComponents = regularComponents
+                    .Where(c => c.gridPosition.x > fork.gridPosition.x && c.gridPosition.x < merge.gridPosition.x)
+                    .ToList();
+
+                // Group components by Y position and get the rightmost component for each Y
+                var finalBranchComponents = branchComponents
+                    .GroupBy(c => c.gridPosition.y)
+                    .Select(g => g.OrderByDescending(c => c.gridPosition.x).First())
+                    .ToList();
+
+                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Found {finalBranchComponents.Count} final branch components for merge {merge.id}");
+
+                foreach (var branchComp in finalBranchComponents)
+                {
+                    // Horizontal wire from component
+                    wires.Add(CreateWire(branchComp.gridPosition, new Vector2Int(merge.gridPosition.x, branchComp.gridPosition.y), wireId++));
+                    // Vertical wire to merge level
+                    if (branchComp.gridPosition.y != merge.gridPosition.y)
+                    {
+                        wires.Add(CreateWire(new Vector2Int(merge.gridPosition.x, branchComp.gridPosition.y), merge.gridPosition, wireId++));
+                    }
+                }
+
+                // Connect merge to next component, preferring same Y position
+                var nextComp = regularComponents
+                    .Where(c => c.gridPosition.x > merge.gridPosition.x)
+                    .OrderBy(c => c.gridPosition.x)
+                    .ThenBy(c => c.gridPosition.y == merge.gridPosition.y ? 0 : 1) // Prioritize same Y position
+                    .FirstOrDefault();
+
+                if (nextComp != null)
+                {
+                    // If Y positions are different, create horizontal wire first
+                    if (nextComp.gridPosition.y != merge.gridPosition.y)
+                    {
+                        // Create horizontal wire to align X positions
                         wires.Add(CreateWire(
-                            new Vector2Int(forkX, forkY),
-                            new Vector2Int(nextX - 1, forkY),
+                            merge.gridPosition,
+                            new Vector2Int(nextComp.gridPosition.x, merge.gridPosition.y),
                             wireId++
                         ));
-
-                        // Vertical wire to next component
+                        // Then create vertical wire to component
                         wires.Add(CreateWire(
-                            new Vector2Int(nextX - 1, forkY),
-                            new Vector2Int(nextX - 1, nextComp.gridPosition.y),
-                            wireId++
-                        ));
-
-                        // Final horizontal wire to component
-                        wires.Add(CreateWire(
-                            new Vector2Int(nextX - 1, nextComp.gridPosition.y),
+                            new Vector2Int(nextComp.gridPosition.x, merge.gridPosition.y),
                             nextComp.gridPosition,
                             wireId++
                         ));
                     }
-                }
-                else
-                {
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Processing series connection at X={currentX}");
-                    // Single component at current X
-                    var currentComp = currentComps[0];
-
-                    // For each component at next X
-                    foreach (var nextComp in nextComps)
+                    else
                     {
-                        // Horizontal wire to X-1 of next component
-                        wires.Add(CreateWire(
-                            currentComp.gridPosition,
-                            new Vector2Int(nextX - 1, currentComp.gridPosition.y),
-                            wireId++
-                        ));
-
-                        // Vertical wire to match Y of next component
-                        wires.Add(CreateWire(
-                            new Vector2Int(nextX - 1, currentComp.gridPosition.y),
-                            new Vector2Int(nextX - 1, nextComp.gridPosition.y),
-                            wireId++
-                        ));
-
-                        // Final horizontal wire to component
-                        wires.Add(CreateWire(
-                            new Vector2Int(nextX - 1, nextComp.gridPosition.y),
-                            nextComp.gridPosition,
-                            wireId++
-                        ));
+                        // Direct horizontal connection if Y positions match
+                        wires.Add(CreateWire(merge.gridPosition, nextComp.gridPosition, wireId++));
                     }
                 }
-            }
-
-            // TODO: Implement proper parallel branch merging logic
-            // Current implementation assumes max 1 parallel branch and merges at a fixed position.
-            // Future enhancement needed: 
-            // - Detect where parallel branches end (not just fixed positions)
-            // - Handle multiple parallel branches in a single circuit
-            // - Implement intelligent merge point detection based on circuit topology
-            // - Consider electrical properties when determining merge points
-            
-            // Only add final merge junction if we have actual parallel branches
-            // AND the last components need to be merged
-            if (hasParallelBranches)
-            {
-                var lastComps = xGroups[xPositions.Last()];
-                if (lastComps.Count > 1)
-                {
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Adding final merge junction for {lastComps.Count} parallel components");
-                    var mergeX = xPositions.Last() + 1;
-                    var mergeY = 0; // Use Y=0 as the merge point (simplified assumption)
-
-                    foreach (var comp in lastComps)
-                    {
-                        // Horizontal wire to merge point
-                        wires.Add(CreateWire(
-                            comp.gridPosition,
-                            new Vector2Int(mergeX, comp.gridPosition.y),
-                            wireId++
-                        ));
-
-                        // Vertical wire to merge point (only if not at Y=0)
-                        if (comp.gridPosition.y != mergeY)
-                        {
-                            wires.Add(CreateWire(
-                                new Vector2Int(mergeX, comp.gridPosition.y),
-                                new Vector2Int(mergeX, mergeY),
-                                wireId++
-                            ));
-                        }
-                    }
-                }
-                else
-                {
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] No final merge junction needed - single component at end");
-                }
-            }
-            else
-            {
-                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] No final merge junction needed - series circuit");
             }
 
             // Filter out invalid wires (distance < 1)
@@ -534,32 +570,40 @@ namespace CircuitProcessor
 
             // Remove duplicate wires
             wires = RemoveDuplicateWires(wires);
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Removed duplicates, final wire count: {wires.Count}");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Removed duplicates, current wire count: {wires.Count}");
 
-            // Now that all wires are created, calculate metadata
-            var connections = AnalyzeWireConnections(wires);
+            // Calculate metadata for wires
             foreach (var wire in wires)
             {
+                
+                // Set horizontal property
+                wire.isHorizontal = wire.fromGrid.y == wire.toGrid.y;
+
                 if (wire.isHorizontal)
                 {
-                    var fromKey = (wire.fromGrid.x, wire.fromGrid.y);
-                    var toKey = (wire.toGrid.x, wire.toGrid.y);
-
                     // Check if wire touches components
                     wire.startTouchesComponent = components.Any(
                         comp => comp.gridPosition.x == wire.fromGrid.x &&
-                               comp.gridPosition.y == wire.fromGrid.y
+                            comp.gridPosition.y == wire.fromGrid.y
                     );
                     wire.endTouchesComponent = components.Any(
                         comp => comp.gridPosition.x == wire.toGrid.x &&
-                               comp.gridPosition.y == wire.toGrid.y
+                            comp.gridPosition.y == wire.toGrid.y
                     );
 
-                    // Check if wire is part of fork or merge
-                    wire.isPartOfFork = connections.from.ContainsKey(toKey) &&
-                                      connections.from[toKey].Count > 1;
-                    wire.isPartOfMerge = connections.to.ContainsKey(fromKey) &&
-                                       connections.to[fromKey].Count > 1;
+                    // Check if wire is part of fork (toGrid matches fork position)
+                    wire.isPartOfFork = components.Any(
+                        comp => comp.type == "fork" &&
+                            comp.gridPosition.x == wire.toGrid.x &&
+                            comp.gridPosition.y == wire.toGrid.y
+                    );
+
+                    // Check if wire is part of merge (fromGrid matches merge position)
+                    wire.isPartOfMerge = components.Any(
+                        comp => comp.type == "merge" &&
+                            comp.gridPosition.x == wire.fromGrid.x &&
+                            comp.gridPosition.y == wire.fromGrid.y
+                    );
                 }
             }
 

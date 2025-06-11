@@ -13,6 +13,7 @@ This step receives the JSON with the structural circuit plan and returns a fully
     - `gridPosition`
     - `asciiPosition` (placeholder, calculated in Step 3)
     - `rectPosition` placeholder
+  - create `fork` and `merge` as components with assigned `gridPosition`, and placeholders `asciiPosition` and `rectPosition`
   - `wires` array: with routing, metadata, and from/to positions
 
 ### ✅ Component Grid Mapping
@@ -40,26 +41,82 @@ Each component **must** also include:
 
 ---
 
-### 🧭 Grid Position Assignment for Parallel Layouts
+### 🧭 Handling Parallel Branches (Updated Logic)
 
-To support proper orthogonal wiring of **parallel branches**, the following spatial rules must be followed:
+Parallel branches occur when the `verbalPlan` contains rectangular brackets `[ ]` and within them the parallel operator `||`. To handle them, we insert structural markers (`fork`, `merge`) and compute their spatial layout accordingly.
 
-1. Components placed in **series** increase along the **X-axis** (`gridX += 1`).
-2. Components placed in **parallel** stay on the same X but vary in **Y-axis** (e.g., `gridY = 0`, `1`, `2`, etc.).
-3. Whenever a parallel branch is detected, it must apply a symmetric horizontal X-offset:
-  - `+2` units to the `gridPosition.x` at the **start** of each branch (fork point),
-  - and `+2` units again to the `gridPosition.x` of the **rejoining** point (merge point).
+---
 
-⚠️ This spacing must be reflected in both:
-- `gridPosition` of the **components**
-- and the `fromGrid`/`toGrid` of the **wires**
+#### 🔁 Fork Node Creation
 
-This ensures that:
-- All branches align cleanly without overlapping wires.
-- ASCII diagrams and pixel renderings preserve orthogonal routing.
-- Rejoins happen at consistent horizontal levels.
+When we detect a parallel branch:
 
-Failure to offset the component placement will cause wires to route diagonally, which is invalid in ASCII logic.
+1. A `fork` node is inserted **before** the first component inside the brackets.
+2. The fork is placed at:
+   - `gridX = previousComponent.gridX + 1`
+   - `gridY = previousComponent.gridY`
+3. Forks are assigned IDs like `"F01"`, `"F02"`, etc.
+4. Forks must be added to the `components` list with:
+   - `id`: unique, with prefix `F`
+   - `type`: `"fork"`
+   - `gridPosition`: as computed
+   - `asciiPosition`: `[0, 0]`
+   - `rectPosition`: `[0, 0]`
+
+---
+
+#### 🔀 Splitting Branches and Calculating maxBranchLength
+
+After inserting a fork:
+
+1. Split the inside of the brackets using the parallel operator `||`.
+2. `Branches = (number of || within the rectangular brackets) + 1`
+3. For each branch, count the number of `+` operators:
+   - Each `+` represents a component in series.
+   - `maxBranchLength = max(number of + in branch) + 1`
+   - This length defines how wide each branch extends horizontally.
+
+---
+
+#### 🧭 Grid Assignment for Branches
+
+Once maxBranchLength is known:
+
+1. Distribute the branches vertically:
+   - If 2 branches: `y = forkY - 1`, `forkY + 1`
+   - If 3 branches: `y = forkY - 1`, `forkY`, `forkY + 1`
+   - And so on, symmetric around forkY.
+
+2. For each branch:
+   - Place first component at:
+     - `gridX = forkX + 1`
+     - `gridY = assigned offset`
+   - Each subsequent component in series increases `gridX += 1`
+
+---
+
+#### 🔁 Merge Node Creation
+
+After processing all branches:
+
+1. Insert a `merge` node at:
+   - `gridX = forkX + maxBranchLength + 1`
+   - `gridY = forkY`
+2. Merge IDs follow the pattern `"M01"`, `"M02"`, etc.
+3. Merges must be added to the `components` list with:
+   - `id`: unique, with prefix `M`
+   - `type`: `"merge"`
+   - `gridPosition`: as computed
+   - `asciiPosition`: `[0, 0]`
+   - `rectPosition`: `[0, 0]`
+
+---
+
+#### 📌 Final Notes
+
+- Forks and merges must always be created **before** routing wires.
+- Wires must not be routed until all components (including forks and merges) are assigned valid `gridPosition`.
+- This layout ensures symmetric, orthogonal structures and correct alignment of all branches.
 
 ---
 
@@ -100,14 +157,17 @@ If the wire is horizontal (`isHorizontal: true`), then you must also compute:
   - `false` otherwise
 
 - `isPartOfFork`: boolean
-  - `true` if the wire's `toGrid` value matches the `fromGrid` of two or more other wires
+  - `true` **if its `toGrid` value matches the `gridPosition` of any component of type `"fork"`**.
   - `false` otherwise
 
 - `isPartOfMerge`: boolean
-  - `true` if the wire's `fromGrid` value matches the `toGrid` of two or more other wires
+  - `true` **if its `fromGrid` value matches the `gridPosition` of any component of type `"merge"`**.
   - `false` otherwise
 
-> 🧠 These fields are used to disambiguate wire rendering logic in Step 3.
+This ensures wires are aware of when they participate in a structural branching or convergence point and allows rendering systems to visually adapt.
+
+> ⚠️ These checks must be performed **only after forks and merges have been appended to the `components` list** and all positions finalized.  
+> Do not attempt to infer fork/merge status based solely on wire topology — rely on the component definitions instead.
 
 All these fields must be placed **alongside each wire object** in the `wires` array inside the Step 2 JSON output. They must not be stored in separate structures.
 
@@ -164,6 +224,15 @@ All wires must follow this logic regardless of merge/fork presence.
   "isPartOfFork": true/false,
   "isPartOfMerge": true/false,
 }
+
+### 🛠️ Wire Generation Order Requirement
+
+- Wire definitions must occur **strictly after** all grid positions for components (including `fork` and `merge`) have been calculated and committed.
+- Do **not** assign `isPartOfFork` or `isPartOfMerge` during a preliminary pass. Always calculate them once component structure is stable.
+
+--- 
+
+This ensures that fork/merge wiring metadata remains deterministic, readable, and can be traced back from `wires` to their corresponding `components`.
 
 ### 🔄 Positional Field Notes (Clarification)
 
@@ -239,7 +308,9 @@ Grid positions:
 { "id": "V01", "type": "battery", "value": 5, "gridPosition": [0,1], "asciiPosition": [0,0], "rectPosition": [0,0] },
 { "id": "R01", "type": "resistor", "value": 10, "gridPosition": [2,0], "asciiPosition": [0,0], "rectPosition": [0,0] },
 { "id": "R02", "type": "resistor", "value": 10, "gridPosition": [2,2], "asciiPosition": [0,0], "rectPosition": [0,0] },
-{ "id": "L01", "type": "lightbulb", "value": 0, "gridPosition": [4,1], "asciiPosition": [0,0], "rectPosition": [0,0] }
+{ "id": "L01", "type": "lightbulb", "value": 0, "gridPosition": [4,1], "asciiPosition": [0,0], "rectPosition": [0,0] },
+{ "id": "F01", "type": "fork", "gridPosition": [1,1], "asciiPosition": [0,0], "rectPosition": [0,0] },
+{ "id": "M01", "type": "merge", "gridPosition": [3,1], "asciiPosition": [0,0], "rectPosition": [0,0] },
 ],
 "wires": [
 { "id": "W01", "fromGrid": [0,1], "toGrid": [1,1], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0], "isHorizontal": true, "startTouchesComponent": true, "endTouchesComponent": false, "isPartOfFork": true, "isPartOfMerge": false },
@@ -286,9 +357,11 @@ Grid positions:
   "components": [
     { "id": "V01", "type": "battery", "value": 5, "gridPosition": [0,1], "asciiPosition": [0,0], "rectPosition": [0,0] },
     { "id": "R01", "type": "resistor", "value": 10, "gridPosition": [2,0], "asciiPosition": [0,0], "rectPosition": [0,0] },
-    { "id": "R02", "type": "resistor", "value": 10, "gridPosition": [2,1], "asciiPosition": [0,0], "rectPosition": [0,0] },
+    { "id": "R02", "type": "resistor", "value": 10, "gridPosition": [3,0], "asciiPosition": [0,0], "rectPosition": [0,0] },
     { "id": "R03", "type": "resistor", "value": 10, "gridPosition": [2,2], "asciiPosition": [0,0], "rectPosition": [0,0] },
-    { "id": "L01", "type": "lightbulb", "value": 0, "gridPosition": [4,1], "asciiPosition": [0,0], "rectPosition": [0,0] }
+    { "id": "L01", "type": "lightbulb", "value": 0, "gridPosition": [5,1], "asciiPosition": [0,0], "rectPosition": [0,0] },
+    { "id": "F01", "type": "fork", "gridPosition": [1,1], "asciiPosition": [0,0], "rectPosition": [0,0] },
+    { "id": "M01", "type": "merge", "gridPosition": [4,1], "asciiPosition": [0,0], "rectPosition": [0,0] },
   ],
   "wires": [
     { "id": "W01", "fromGrid": [0,1], "toGrid": [1,1], "fromASCII": [0,0], "toASCII": [0,0], "fromRect": [0,0], "toRect": [0,0],
