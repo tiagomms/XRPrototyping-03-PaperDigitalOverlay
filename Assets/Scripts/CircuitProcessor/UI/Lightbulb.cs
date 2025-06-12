@@ -1,18 +1,22 @@
+using TMPro;
 using UnityEngine;
 using Utils;
 
 namespace CircuitProcessor
 {
-    public class Lightbulb : CircuitComponentUI
+    // FIXME: this implementation is terrible, but no time.
+    public class Lightbulb : SliderComponentUI
     {
-        private CircuitFormulaEvaluator formulaEvaluator;
-
         [Header("LightBulb features")]
         [SerializeField] private Renderer _bulbRenderer;
-
-        [SerializeField] private float intensity;
         [SerializeField] private float intensityToBrightnessFactor = 0.001f;
         public float lerpSpeed = 10f; // how fast the transition is
+
+
+        [Header("Debug")]
+        [SerializeField] private float intensity;
+        private CircuitFormulaEvaluator formulaEvaluator;
+
         private Material mat;
         private Color currentColor;
         private Color targetColor;
@@ -29,9 +33,6 @@ namespace CircuitProcessor
 
         public override void Initialize(Component component)
         {
-            hasEditableUI = false;
-            editableType = EditableType.None;
-
             base.Initialize(component);
         }
 
@@ -82,13 +83,9 @@ namespace CircuitProcessor
             return newIntensity / intensityToBrightnessFactor;
         }
 
-        protected override string WriteDisplayUIText()
+        protected override void UpdateDisplayUI()
         {
-            if (Mathf.Approximately(intensity, -1f))
-            {
-                return $"{id}\nERROR";    
-            }
-            return $"{id}\n{NumberFormatter.FormatRoundedAbbreviation(intensity, 2)}";
+            base.UpdateDisplayUI();
         }
 
         void Update()

@@ -8,6 +8,7 @@ namespace CircuitProcessor
 {
     public class SliderComponentUI : CircuitComponentUI
     {
+        [Header("Slider References")]
         [SerializeField] private GameObject sliderParent;
         [SerializeField] private Slider slider;
 

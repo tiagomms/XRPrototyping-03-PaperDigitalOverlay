@@ -27,6 +27,7 @@ namespace CircuitProcessor
         [SerializeField] protected GameObject displayUI;
         // Optional: display value text
         [SerializeField] protected TextMeshProUGUI displayText;
+        [SerializeField] protected string unitOfReference;
 
         [Header("Editable UI")]
         [SerializeField] protected bool hasEditableUI = false;
@@ -65,7 +66,7 @@ namespace CircuitProcessor
 
         protected virtual string WriteDisplayUIText()
         {
-            return $"{id}\n{NumberFormatter.FormatRoundedAbbreviation(value, 2)}";
+            return $"{id}\n{NumberFormatter.FormatWithUnit(value, unitOfReference, 2)}";
         }
 
         protected virtual void UpdateDisplayUI()

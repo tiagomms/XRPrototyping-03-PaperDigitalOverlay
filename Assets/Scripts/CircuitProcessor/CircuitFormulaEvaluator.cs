@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 using UnityEngine.Events;
 using TMPro;
+using Utils;
 
 namespace CircuitProcessor
 {
@@ -16,12 +17,16 @@ namespace CircuitProcessor
     {
         // TODO: nice class that writes Formula for each lightbulb
         [SerializeField] private TextMeshProUGUI formulaText;
+        [SerializeField] private TextMeshProUGUI intensityText;
         [Header("Debug")]
         [SerializeField] private bool sendToXRDebugLogViewer = true;
         [SerializeField] private bool sendToDebugLog = true;
         private CircuitData circuitData;
         private Dictionary<string, double> componentValues;
         public UnityEvent<float> OnCalculatingFormula;
+
+        private float _intensity;
+        public float Intensity => _intensity;
 
         public void Initialize(CircuitData circuitData)
         {
@@ -70,20 +75,39 @@ namespace CircuitProcessor
             {
                 string substitutedFormula = SubstituteComponentValues(circuitData.formula);
                 XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Substituted formula: {substitutedFormula}", sendToXRDebugLogViewer, sendToDebugLog);
-                
+
                 var result = EvaluateExpression(substitutedFormula);
-                float floatResult = (float)result;
-                XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Formula evaluated to: {floatResult}", sendToXRDebugLogViewer, sendToDebugLog);
-                
-                OnCalculatingFormula.Invoke(floatResult);
-                return floatResult;
+                _intensity = (float)result;
+                XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Formula evaluated to: {_intensity}", sendToXRDebugLogViewer, sendToDebugLog);
+                WriteIntensityUIText();
+
+                OnCalculatingFormula.Invoke(_intensity);
+                return _intensity;
             }
             catch (Exception ex)
             {
                 XRDebugLogViewer.LogError($"CircuitFormulaEvaluator: Error evaluating formula: {ex.Message}");
+                WriteIntensityUIText();
+
                 OnCalculatingFormula.Invoke(-1f);
                 return -1f;
             }
+        }
+
+        private void WriteIntensityUIText()
+        {
+            string result = "I = ";
+            if (Mathf.Approximately(_intensity, -1f))
+            {
+                result += $"ERROR - Please try again later";
+            }
+            else
+            {
+                result += $"{NumberFormatter.FormatWithUnit(_intensity, "A", 2)}";
+            }
+            XRDebugLogViewer.Log($"[{nameof(CircuitFormulaEvaluator)}] - INTENSITY VALUE: {result}");
+
+            intensityText.text = result;
         }
 
         /// <summary>
@@ -153,7 +177,7 @@ namespace CircuitProcessor
 
                 // Use word boundary regex to ensure we only replace complete component IDs
                 string pattern = @"\b" + Regex.Escape(componentId) + @"\b";
-                
+
                 // Format double values to handle scientific notation properly
                 string valueString = FormatDoubleForSubstitution(value);
                 result = Regex.Replace(result, pattern, valueString);
@@ -196,7 +220,7 @@ namespace CircuitProcessor
             try
             {
                 XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Evaluating expression: {expression}", sendToXRDebugLogViewer, sendToDebugLog);
-                
+
                 // Remove whitespace
                 expression = expression.Replace(" ", "");
 
@@ -242,14 +266,14 @@ namespace CircuitProcessor
 
                 string innerExpression = expression.Substring(lastOpen + 1, firstClose - lastOpen - 1);
                 XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Evaluating inner expression: {innerExpression}", sendToXRDebugLogViewer, sendToDebugLog);
-                
+
                 double innerResult = EvaluateRecursive(innerExpression);
                 string resultString = FormatDoubleForSubstitution(innerResult);
 
                 expression = expression.Substring(0, lastOpen) +
                            resultString +
                            expression.Substring(firstClose + 1);
-                
+
                 XRDebugLogViewer.Log($"CircuitFormulaEvaluator: After parentheses evaluation: {expression}", sendToXRDebugLogViewer, sendToDebugLog);
             }
 
@@ -317,7 +341,7 @@ namespace CircuitProcessor
             XRDebugLogViewer.LogError($"CircuitFormulaEvaluator: Unable to parse expression: {expression}");
             throw new InvalidOperationException($"Unable to parse expression: {expression}");
         }
-        
+
         /// <summary>
         /// Gets a formatted string representation of the formula with current values
         /// </summary>

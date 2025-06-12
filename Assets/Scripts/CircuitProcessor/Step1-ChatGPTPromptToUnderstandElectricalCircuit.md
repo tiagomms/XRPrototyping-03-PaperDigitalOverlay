@@ -163,6 +163,22 @@ Parsing failure will occur if:
 - A linear (series) path is incorrectly wrapped in a reciprocal (parallel) expression.
 - Two components are grouped as a branch when only one route for current exists.
 
+#### 💡 Lightbulb Ordering Rule
+Lightbulbs (`L#`) must be placed **last** in both the `verbalPlan` and `formula`, **whenever this does not affect circuit behavior or Ohm's Law correctness**. This ensures readability and reinforces their visual role as output indicators. Reordering is only allowed if it does not modify the actual logical flow or break structural correctness (e.g., altering series/parallel logic).
+
+Examples:
+- ✅ Good: `V01 -> R01 + S01 || R02 -> L01`
+- ❌ Avoid: `V01 -> L01 -> R01 + S01 || R02` unless structure requires it
+
+#### 🔙 Return Phrase Simplification
+In `verbalPlan`, **do not include** the string `-> return`. The return path is always implied unless omitting it would cause ambiguity. This avoids redundancy and keeps the verbal plan clean.
+
+Examples:
+- ✅ Good: `V01 -> R01 -> L01`
+- ❌ Avoid: `V01 -> R01 -> L01 -> return`
+
+These rules must be applied universally across all output examples, formula string construction, and verbal plans.
+
 #### Verbal Plan Example:
 `V01 -> R05 -> [ R01 + S01 || R02 ] -> L01`  
 `S01 is open -> R01 path is conditional`  
@@ -198,7 +214,6 @@ Parsing failure will occur if:
   "notes": "S01 is open -> R01 path is conditional. R02 is always active"
 }
 
-
 ---
 
 ### 🔁 Conditional Logic & Switch Behavior
@@ -226,7 +241,7 @@ Every switch in the drawing must be interpreted and represented in three places:
 - Switches imply conditional logic — regardless of `value`
 - `"value"` controls **evaluation**, not inclusion in structure
 - Always include the affected components in the `formulaFragment`, even if `value = 1`
-- Use `cond(S01, (R02 + L01))` to wrap affected subgraphs
+- Use `S01 * (R02 + L01)` to wrap affected subgraphs
 
 Switch-controlled paths must appear in all 3 locations:
 - `components` entry with `type: switch` and `value: 0` or `1`
@@ -234,14 +249,14 @@ Switch-controlled paths must appear in all 3 locations:
   - `switchId`
   - `affects` - array of components disconnected by that switch when `"value": 0`
   - `formulaFragment` - if switch was closed `"value": 1`, `formulaFragment` would represent the Ohm's Law formula of all components affected by the switch within the entire electrical circuit
-- `formula` referencing the `cond(...)` block
+- `formula` referencing the `conditionalBranches` block, as stated in the summary table below.
 
 ##### ✅ Summary Table
 
 | Switch Placement | Formula Behavior             |
 |------------------|------------------------------|
-| Series           | `cond(S01, (entire loop))`    |
-| Parallel         | `cond(S01, (branch only))`    |
+| Series           | `S01 * (entire loop)`    |
+| Parallel         | `S01 * (branch only)`    |
 
 Always trace return paths to the generator.  
 If no alternate path exists, the switch disables the entire circuit and must wrap all downstream elements.
@@ -340,24 +355,6 @@ Lightbulbs (`L#`) must always be treated as resistive components.
 All components in the same parallel fork must be listed inside the same reciprocal block, and switch-controlled segments inside those forks must also use the `Sx * (...)` form.
 
 > 📎 Optional: In future versions, formulas may be converted to pseudocode or structured JSON tables for executable use. This document assumes symbolic math but is compatible with structured transformations.
-
-### 🧩 Verbal Plan and Formula Refinement Rules
-
-#### 💡 Lightbulb Ordering Rule
-Lightbulbs (`L#`) must be placed **last** in both the `verbalPlan` and `formula`, **whenever this does not affect circuit behavior or Ohm's Law correctness**. This ensures readability and reinforces their visual role as output indicators. Reordering is only allowed if it does not modify the actual logical flow or break structural correctness (e.g., altering series/parallel logic).
-
-Examples:
-- ✅ Good: `V01 -> R01 + S01 || R02 -> L01`
-- ❌ Avoid: `V01 -> L01 -> R01 + S01 || R02` unless structure requires it
-
-#### 🔙 Return Phrase Simplification
-In `verbalPlan`, **do not include** the string `-> return`. The return path is always implied unless omitting it would cause ambiguity. This avoids redundancy and keeps the verbal plan clean.
-
-Examples:
-- ✅ Good: `V01 -> R01 -> L01`
-- ❌ Avoid: `V01 -> R01 -> L01 -> return`
-
-These rules must be applied universally across all output examples, formula string construction, and verbal plans.
 
 ---
 

@@ -80,6 +80,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayUI: {fileID: 5335264981956007629}
   displayText: {fileID: 6786664393371260996}
+  unitOfReference: "\u03A9"
   hasEditableUI: 1
   editableUI: {fileID: 5464143387582328664}
   editableType: 1

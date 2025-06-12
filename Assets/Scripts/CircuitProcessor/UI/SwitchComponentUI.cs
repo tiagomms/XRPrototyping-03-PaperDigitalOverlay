@@ -7,6 +7,7 @@ namespace CircuitProcessor
 {
     public class SwitchComponentUI : CircuitComponentUI
     {
+        [Header("Toggle References")]
         [SerializeField] private Toggle toggle;
         [SerializeField] private GameObject toggleParent;
         

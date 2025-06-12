@@ -189,20 +189,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c578422732b576245abbaf3a705862c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  component:
-    id: 
-    type: 
-    value: 0
-    gridPosition: {x: 0, y: 0}
-    asciiPosition: {x: 0, y: 0}
-    rectPosition: {x: 0, y: 0}
   displayUI: {fileID: 3335210308783157255}
   displayText: {fileID: 4209938143782354574}
+  unitOfReference: V
   hasEditableUI: 1
   editableUI: {fileID: 3429260582942460306}
   editableType: 1
   editableDisplayUIText: {fileID: 4494088504653973075}
   editableOptions: {fileID: 4900065646115726663}
+  initialOffset: 9.5
+  gridFactor: 1.5
   sliderParent: {fileID: 8689672995569559456}
   slider: {fileID: 377946485651233602}
   minValueUIText: {fileID: 2941281604964116073}
