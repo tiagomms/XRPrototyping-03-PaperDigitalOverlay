@@ -28,6 +28,10 @@ namespace CircuitProcessor
         [Header("System Prompt")]
         [SerializeField, HideIf("testMode")] private TextAsset systemPromptFile; // Drag your markdown file here
 
+        [Header("Debug")]
+        [SerializeField] private bool sendToXRDebugLogViewer = true;
+        [SerializeField] private bool sendToDebugLog = true;
+
         private OpenAIClient openAIClient;
         private string systemPrompt;
 
@@ -98,13 +102,13 @@ Now process the image using full one-pass mode and return the output JSON only."
         {
             if (circuitImage == null)
             {
-                Debug.LogError("Circuit image is null!");
+                XRDebugLogViewer.LogError("Circuit image is null!");
                 return null;
             }
 
             try
             {
-                Debug.Log("Starting circuit analysis...");
+                XRDebugLogViewer.Log("Starting circuit analysis...", sendToXRDebugLogViewer, sendToDebugLog);
                 string jsonResponse;
                 if (!testMode)
                 {
@@ -119,14 +123,14 @@ Now process the image using full one-pass mode and return the output JSON only."
                 {
                     return null;
                 }
-                Debug.Log($"Received response: {jsonResponse}");
+                XRDebugLogViewer.Log($"Received response: {jsonResponse}", sendToXRDebugLogViewer, sendToDebugLog);
 
                 // Parse JSON response
                 CircuitData circuitData = ParseJsonResponse(jsonResponse);
 
                 if (circuitData != null)
                 {
-                    Debug.Log("Circuit analysis completed successfully!");
+                    XRDebugLogViewer.Log("Circuit analysis completed successfully!", sendToXRDebugLogViewer, sendToDebugLog);
                     LogCircuitData(circuitData);
                 }
 
@@ -134,8 +138,8 @@ Now process the image using full one-pass mode and return the output JSON only."
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error during circuit analysis: {ex.Message}");
-                Debug.LogError($"Stack trace: {ex.StackTrace}");
+                XRDebugLogViewer.LogError($"Error during circuit analysis: {ex.Message}");
+                XRDebugLogViewer.LogError($"Stack trace: {ex.StackTrace}");
                 return null;
             }
         }
@@ -144,7 +148,7 @@ Now process the image using full one-pass mode and return the output JSON only."
         {
             if (testOutputs.IsNullOrEmpty())
             {
-                Debug.LogError($"Circuit analysis - TEST MODE - No test outputs serialized");
+                XRDebugLogViewer.LogError($"Circuit analysis - TEST MODE - No test outputs serialized");
                 return null;
             }
             await Task.Delay(TimeSpan.FromSeconds(1f));
@@ -158,13 +162,13 @@ Now process the image using full one-pass mode and return the output JSON only."
         {
             if (openAIClient == null)
             {
-                Debug.LogError("OpenAI client not initialized!");
+                XRDebugLogViewer.LogError("OpenAI client not initialized!");
                 return null;
             }
 
             if (string.IsNullOrEmpty(systemPrompt))
             {
-                Debug.LogError("System prompt not loaded!");
+                XRDebugLogViewer.LogError("System prompt not loaded!");
                 return null;
             }
 
@@ -193,7 +197,7 @@ Now process the image using full one-pass mode and return the output JSON only."
 
             if (response?.FirstChoice?.Message?.Content == null)
             {
-                Debug.LogError("No response content received from ChatGPT");
+                XRDebugLogViewer.LogError("No response content received from ChatGPT");
                 return null;
             }
 
@@ -210,7 +214,7 @@ Now process the image using full one-pass mode and return the output JSON only."
             // Ensure texture is readable
             if (!texture.isReadable)
             {
-                Debug.LogWarning("Texture is not readable. Creating a readable copy...");
+                XRDebugLogViewer.LogWarning("Texture is not readable. Creating a readable copy...");
                 texture = MakeTextureReadable(texture);
             }
 
@@ -258,7 +262,7 @@ Now process the image using full one-pass mode and return the output JSON only."
                 var tempObject = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonResponse);
                 if (tempObject.ContainsKey("error"))
                 {
-                    Debug.LogError($"ChatGPT returned error: {tempObject["error"]}");
+                    XRDebugLogViewer.LogError($"ChatGPT returned error: {tempObject["error"]}");
                     return null;
                 }
 
@@ -268,7 +272,7 @@ Now process the image using full one-pass mode and return the output JSON only."
                 // Validate parsed data
                 if (circuitData?.components == null)
                 {
-                    Debug.LogError("Parsed CircuitData has null components list");
+                    XRDebugLogViewer.LogError("Parsed CircuitData has null components list");
                     return null;
                 }
 
@@ -276,13 +280,13 @@ Now process the image using full one-pass mode and return the output JSON only."
             }
             catch (JsonException ex)
             {
-                Debug.LogError($"JSON parsing error: {ex.Message}");
-                Debug.LogError($"JSON content: {jsonResponse}");
+                XRDebugLogViewer.LogError($"JSON parsing error: {ex.Message}");
+                XRDebugLogViewer.LogError($"JSON content: {jsonResponse}");
                 return null;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Unexpected error parsing response: {ex.Message}");
+                XRDebugLogViewer.LogError($"Unexpected error parsing response: {ex.Message}");
                 return null;
             }
         }
@@ -333,7 +337,7 @@ Now process the image using full one-pass mode and return the output JSON only."
                     result += $"     {component.id} ({component.type}) = {component.value}\n";
                 }
             }
-            XRDebugLogViewer.Log($"{result}");
+            XRDebugLogViewer.Log($"{result}", sendToXRDebugLogViewer, sendToDebugLog);
         }
 
         /// <summary>
@@ -367,11 +371,11 @@ Now process the image using full one-pass mode and return the output JSON only."
                 string json = JsonConvert.SerializeObject(circuitData, Formatting.Indented);
                 string filepath = Path.Combine(Application.persistentDataPath, filename);
                 File.WriteAllText(filepath, json);
-                Debug.Log($"Circuit data saved to: {filepath}");
+                XRDebugLogViewer.Log($"Circuit data saved to: {filepath}", sendToXRDebugLogViewer, sendToDebugLog);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error saving circuit data: {ex.Message}");
+                XRDebugLogViewer.LogError($"Error saving circuit data: {ex.Message}");
             }
         }
     }
