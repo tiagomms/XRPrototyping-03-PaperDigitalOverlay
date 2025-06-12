@@ -14,40 +14,49 @@ namespace CircuitProcessor
     /// </summary>
     public class CircuitGridAssigner : MonoBehaviour
     {
+        [Tooltip("Normalize all grid positions so minimum is 0 on both axes")]
+        [SerializeField] private bool isGridNormalized = true;
+
+        [Header("Debug")]
+        [SerializeField] private bool sendToXRDebugLogViewer = true;
+        [SerializeField] private bool sendToDebugLog = true;
         /// <summary>
         /// Main entry point for processing the circuit data
         /// </summary>
         public CircuitData InitializeGridAssigner(CircuitData data)
         {
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Starting grid assignment with {data.components?.Count ?? 0} components");
-            
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Starting grid assignment with {data.components?.Count ?? 0} components", sendToXRDebugLogViewer, sendToDebugLog);
+
             if (data == null)
             {
-                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] ERROR: Input data is null");
+                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] ERROR: Input data is null", sendToXRDebugLogViewer, sendToDebugLog);
                 return null;
             }
 
             if (string.IsNullOrEmpty(data.verbalPlan))
             {
-                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] ERROR: Verbal plan is empty");
+                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] ERROR: Verbal plan is empty", sendToXRDebugLogViewer, sendToDebugLog);
                 return null;
             }
 
             var orderedIds = ParseVerbalPlan(data.verbalPlan);
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Parsed {orderedIds.Count} components from verbal plan");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Parsed {orderedIds.Count} components from verbal plan", sendToXRDebugLogViewer, sendToDebugLog);
 
             // Process the verbal plan and create components with fork/merge nodes
             var allComponents = ProcessVerbalPlanWithForkMerge(orderedIds, data.components);
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Created {allComponents.Count} total components (including forks/merges)");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Created {allComponents.Count} total components (including forks/merges)", sendToXRDebugLogViewer, sendToDebugLog);
 
             // Generate wires after all components are positioned
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Starting wire generation for {allComponents.Count} components");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Starting wire generation for {allComponents.Count} components", sendToXRDebugLogViewer, sendToDebugLog);
             var wires = GenerateWires(allComponents);
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Generated {wires.Count} wires");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Generated {wires.Count} wires", sendToXRDebugLogViewer, sendToDebugLog);
 
             // Normalize all grid positions so minimum is 0 on both axes
-            NormalizeGridPositions(allComponents, wires);
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Normalized all grid positions");
+            if (isGridNormalized)
+            {
+                NormalizeGridPositions(allComponents, wires);
+                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Normalized all grid positions", sendToXRDebugLogViewer, sendToDebugLog);
+            }
 
             // Create final output by copying all original data
             var finalOutput = new CircuitData
@@ -61,7 +70,7 @@ namespace CircuitProcessor
                 additionalData = data.additionalData
             };
 
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Completed grid assignment. Output contains {finalOutput.components.Count} components and {finalOutput.wires.Count} wires");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Completed grid assignment. Output contains {finalOutput.components.Count} components and {finalOutput.wires.Count} wires", sendToXRDebugLogViewer, sendToDebugLog);
             return finalOutput;
         }
 
@@ -70,17 +79,17 @@ namespace CircuitProcessor
         /// </summary>
         private void NormalizeGridPositions(List<Component> components, List<Wire> wires)
         {
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Starting grid position normalization");
-            
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Starting grid position normalization", sendToXRDebugLogViewer, sendToDebugLog);
+
             // Find minimum X and Y across all components and wires
             var allPositions = new List<Vector2Int>();
-            
+
             // Add component positions
             foreach (var comp in components)
             {
                 allPositions.Add(comp.gridPosition);
             }
-            
+
             // Add wire positions
             foreach (var wire in wires)
             {
@@ -90,29 +99,29 @@ namespace CircuitProcessor
 
             if (allPositions.Count == 0)
             {
-                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] No positions to normalize");
+                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] No positions to normalize", sendToXRDebugLogViewer, sendToDebugLog);
                 return;
             }
 
             var minX = allPositions.Min(p => p.x);
             var minY = allPositions.Min(p => p.y);
 
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Minimum positions - X: {minX}, Y: {minY}");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Minimum positions - X: {minX}, Y: {minY}", sendToXRDebugLogViewer, sendToDebugLog);
 
             // Only normalize if there are negative positions
             if (minX < 0 || minY < 0)
             {
                 var offsetX = minX < 0 ? -minX : 0;
                 var offsetY = minY < 0 ? -minY : 0;
-                
-                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Applying offset - X: {offsetX}, Y: {offsetY}");
+
+                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Applying offset - X: {offsetX}, Y: {offsetY}", sendToXRDebugLogViewer, sendToDebugLog);
 
                 // Normalize component positions
                 foreach (var comp in components)
                 {
                     var oldPos = comp.gridPosition;
                     comp.gridPosition = new Vector2Int(oldPos.x + offsetX, oldPos.y + offsetY);
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Normalized component {comp.id}: {oldPos} -> {comp.gridPosition}");
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Normalized component {comp.id}: {oldPos} -> {comp.gridPosition}", sendToXRDebugLogViewer, sendToDebugLog);
                 }
 
                 // Normalize wire positions
@@ -122,12 +131,12 @@ namespace CircuitProcessor
                     var oldTo = wire.toGrid;
                     wire.fromGrid = new Vector2Int(oldFrom.x + offsetX, oldFrom.y + offsetY);
                     wire.toGrid = new Vector2Int(oldTo.x + offsetX, oldTo.y + offsetY);
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Normalized wire {wire.id}: {oldFrom}->{oldTo} to {wire.fromGrid}->{wire.toGrid}");
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Normalized wire {wire.id}: {oldFrom}->{oldTo} to {wire.fromGrid}->{wire.toGrid}", sendToXRDebugLogViewer, sendToDebugLog);
                 }
             }
             else
             {
-                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] No normalization needed - all positions are non-negative");
+                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] No normalization needed - all positions are non-negative", sendToXRDebugLogViewer, sendToDebugLog);
             }
         }
 
@@ -138,7 +147,7 @@ namespace CircuitProcessor
         {
             if (string.IsNullOrEmpty(plan))
             {
-                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] ERROR: Empty verbal plan");
+                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] ERROR: Empty verbal plan", sendToXRDebugLogViewer, sendToDebugLog);
                 return new List<string>();
             }
 
@@ -152,8 +161,8 @@ namespace CircuitProcessor
                             .Where(t => !string.IsNullOrEmpty(t))
                             .ToList();
 
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Parsed verbal plan: {plan}");
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Found {tokens.Count} tokens: {string.Join(", ", tokens)}");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Parsed verbal plan: {plan}", sendToXRDebugLogViewer, sendToDebugLog);
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Found {tokens.Count} tokens: {string.Join(", ", tokens)}", sendToXRDebugLogViewer, sendToDebugLog);
             return tokens;
         }
 
@@ -206,8 +215,8 @@ namespace CircuitProcessor
         /// </summary>
         private List<Component> ProcessVerbalPlanWithForkMerge(List<string> tokens, List<Component> originalComponents)
         {
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Processing verbal plan with fork/merge logic");
-            
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Processing verbal plan with fork/merge logic", sendToXRDebugLogViewer, sendToDebugLog);
+
             var allComponents = new List<Component>();
             var componentDict = originalComponents.ToDictionary(c => c.id, c => c);
             var currentX = 0;
@@ -221,14 +230,14 @@ namespace CircuitProcessor
 
                 if (IsParallelBranch(token))
                 {
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Processing parallel branch: {token}");
-                    
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Processing parallel branch: {token}", sendToXRDebugLogViewer, sendToDebugLog);
+
                     // Parse parallel branches
                     var branches = ParseParallelBranches(token);
                     var branchCount = branches.Count;
                     var maxBranchLength = branches.Max(b => b.Count);
-                    
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Found {branchCount} branches, max length: {maxBranchLength}");
+
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Found {branchCount} branches, max length: {maxBranchLength}", sendToXRDebugLogViewer, sendToDebugLog);
 
                     // Create fork node
                     var forkId = $"F{forkCounter:D2}";
@@ -243,8 +252,8 @@ namespace CircuitProcessor
                     };
                     allComponents.Add(fork);
                     forkCounter++;
-                    
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Created fork {forkId} at position {fork.gridPosition}");
+
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Created fork {forkId} at position {fork.gridPosition}", sendToXRDebugLogViewer, sendToDebugLog);
 
                     // Calculate Y positions for branches (symmetric around fork Y)
                     var branchYPositions = new List<int>();
@@ -275,7 +284,7 @@ namespace CircuitProcessor
                         var branchY = branchYPositions[branchIndex];
                         var branchX = currentX + 1; // Start after fork
 
-                        XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Processing branch {branchIndex} with {branch.Count} components at Y={branchY}");
+                        XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Processing branch {branchIndex} with {branch.Count} components at Y={branchY}", sendToXRDebugLogViewer, sendToDebugLog);
 
                         foreach (var compId in branch)
                         {
@@ -292,12 +301,12 @@ namespace CircuitProcessor
                                     rectPosition = Vector2.zero
                                 };
                                 allComponents.Add(branchComp);
-                                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Placed component {compId} at position {branchComp.gridPosition}");
+                                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Placed component {compId} at position {branchComp.gridPosition}", sendToXRDebugLogViewer, sendToDebugLog);
                                 branchX++; // Move to next X position for series components
                             }
                             else
                             {
-                                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] WARNING: Component {compId} not found in original components");
+                                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] WARNING: Component {compId} not found in original components", sendToXRDebugLogViewer, sendToDebugLog);
                             }
                         }
                     }
@@ -316,8 +325,8 @@ namespace CircuitProcessor
                     };
                     allComponents.Add(merge);
                     mergeCounter++;
-                    
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Created merge {mergeId} at position {merge.gridPosition}");
+
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Created merge {mergeId} at position {merge.gridPosition}", sendToXRDebugLogViewer, sendToDebugLog);
 
                     // Update current X position (add +1 for spacing as per documentation)
                     currentX = mergeX + 1;
@@ -338,17 +347,17 @@ namespace CircuitProcessor
                             rectPosition = Vector2.zero
                         };
                         allComponents.Add(seriesComp);
-                        XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Placed series component {token} at position {seriesComp.gridPosition}");
+                        XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Placed series component {token} at position {seriesComp.gridPosition}", sendToXRDebugLogViewer, sendToDebugLog);
                         currentX += 1;
                     }
                     else
                     {
-                        XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] WARNING: Component {token} not found in original components");
+                        XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] WARNING: Component {token} not found in original components", sendToXRDebugLogViewer, sendToDebugLog);
                     }
                 }
             }
 
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Completed processing. Created {allComponents.Count} total components");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Completed processing. Created {allComponents.Count} total components", sendToXRDebugLogViewer, sendToDebugLog);
             return allComponents;
         }
 
@@ -412,8 +421,8 @@ namespace CircuitProcessor
         /// </summary>
         private List<Wire> GenerateWires(List<Component> components)
         {
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Starting wire generation for {components.Count} components");
-            
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Starting wire generation for {components.Count} components", sendToXRDebugLogViewer, sendToDebugLog);
+
             var wires = new List<Wire>();
             var wireId = 1;
 
@@ -422,13 +431,13 @@ namespace CircuitProcessor
             var forks = components.Where(c => c.type == "fork").ToList();
             var merges = components.Where(c => c.type == "merge").ToList();
 
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Found {regularComponents.Count} regular components, {forks.Count} forks, {merges.Count} merges");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Found {regularComponents.Count} regular components, {forks.Count} forks, {merges.Count} merges", sendToXRDebugLogViewer, sendToDebugLog);
 
             // 1. Connect regular components in series within the same branch (same Y coordinate)
             for (int i = 0; i < regularComponents.Count; i++)
             {
                 var currentComp = regularComponents[i];
-                
+
                 // Find the next component in the same branch (same Y coordinate) and consecutive X position
                 var nextInBranch = regularComponents
                     .Where(c => c.gridPosition.y == currentComp.gridPosition.y && // Same branch (Y coordinate)
@@ -439,7 +448,7 @@ namespace CircuitProcessor
                 {
                     // Create horizontal wire within the same branch
                     wires.Add(CreateWire(currentComp.gridPosition, nextInBranch.gridPosition, wireId++));
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Created series wire from {currentComp.id} to {nextInBranch.id}");
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Created series wire from {currentComp.id} to {nextInBranch.id}", sendToXRDebugLogViewer, sendToDebugLog);
                 }
             }
 
@@ -498,12 +507,12 @@ namespace CircuitProcessor
                 // Extract fork number from merge ID (e.g., "M02" -> 2)
                 int mergeNumber = int.Parse(merge.id.Substring(1));
                 string forkId = $"F{mergeNumber:D2}";
-                
+
                 // Find the corresponding fork
                 var fork = forks.FirstOrDefault(f => f.id == forkId);
                 if (fork == null)
                 {
-                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] WARNING: No matching fork found for merge {merge.id}");
+                    XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] WARNING: No matching fork found for merge {merge.id}", sendToXRDebugLogViewer, sendToDebugLog);
                     continue;
                 }
 
@@ -518,7 +527,7 @@ namespace CircuitProcessor
                     .Select(g => g.OrderByDescending(c => c.gridPosition.x).First())
                     .ToList();
 
-                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Found {finalBranchComponents.Count} final branch components for merge {merge.id}");
+                XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Found {finalBranchComponents.Count} final branch components for merge {merge.id}", sendToXRDebugLogViewer, sendToDebugLog);
 
                 foreach (var branchComp in finalBranchComponents)
                 {
@@ -566,16 +575,16 @@ namespace CircuitProcessor
 
             // Filter out invalid wires (distance < 1)
             wires = wires.Where(IsValidWire).ToList();
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Filtered to {wires.Count} valid wires");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Filtered to {wires.Count} valid wires", sendToXRDebugLogViewer, sendToDebugLog);
 
             // Remove duplicate wires
             wires = RemoveDuplicateWires(wires);
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Removed duplicates, current wire count: {wires.Count}");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Removed duplicates, current wire count: {wires.Count}", sendToXRDebugLogViewer, sendToDebugLog);
 
             // Calculate metadata for wires
             foreach (var wire in wires)
             {
-                
+
                 // Set horizontal property
                 wire.isHorizontal = wire.fromGrid.y == wire.toGrid.y;
 
@@ -613,7 +622,7 @@ namespace CircuitProcessor
                 wires[i].id = $"W{i + 1:D2}";
             }
 
-            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Completed wire generation with {wires.Count} wires");
+            XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Completed wire generation with {wires.Count} wires", sendToXRDebugLogViewer, sendToDebugLog);
             return wires;
         }
     }

@@ -16,16 +16,12 @@ namespace CircuitProcessor
         // Fixed layout parameters from specification
         [SerializeField] private int ASCII_CELL_WIDTH = 5;
         [SerializeField] private int ASCII_CELL_HEIGHT = 3;
-        private int ASCII_HORIZONTAL_PADDING;  // 1 cellWidth on each side
+        [SerializeField] private int ASCII_HORIZONTAL_PADDING = 5;  // 1 cellWidth on each side
         [SerializeField] private int ASCII_VERTICAL_PADDING = 1;  // 1 row top and bottom
 
         private char[,] canvas;
         private int canvasWidth;
         private int canvasHeight;
-
-        private void Awake() {
-            ASCII_HORIZONTAL_PADDING = ASCII_CELL_WIDTH;
-        }
 
         /// <summary>
         /// Draws the complete circuit

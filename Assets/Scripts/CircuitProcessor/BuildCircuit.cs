@@ -12,12 +12,21 @@ namespace CircuitProcessor
     /// </summary>
     public class BuildCircuit : MonoBehaviour
     {
+        public enum CircuitProductType
+        {
+            PrefabBased = 0,
+            TextBased = 1
+        }
+
         [Header("Circuit Scripts")]
         [SerializeField] private CircuitAnalyzer analyzer;
         [SerializeField] private CircuitGridAssigner gridAssigner;
         [SerializeField] private CircuitASCIIDrawer asciiDrawer;
         [SerializeField] private CircuitASCIIToText asciiToText;
+        [SerializeField] private CircuitPrefabDrawer prefabDrawer;
 
+        [Header("Build Settings")]
+        [SerializeField] private CircuitProductType finalProduct = CircuitProductType.TextBased;
 
         [Header("Passthrough Camera Description")]
         [SerializeField] private PassthroughCameraTaker passthroughCameraDescription;
@@ -27,10 +36,15 @@ namespace CircuitProcessor
         [SerializeField] private bool debugGridAssigner = false;
         [SerializeField] private bool debugASCIIDrawer = false;
         [SerializeField] private bool debugASCIIToImage = false;
+        [SerializeField] private bool debugPrefabDrawer = false;
 
         [Header("Output Settings")]
         [SerializeField] private string outputFolder = "CircuitOutputs";
         [SerializeField] private int currentBuildNumber = 0;
+
+        [Header("Debug")]
+        [SerializeField] private bool sendToXRDebugLogViewer = true;
+        [SerializeField] private bool sendToDebugLog = true;
         private string outputPath;
         private string buildPrefix;
         private CircuitData currentCircuitData;
@@ -50,16 +64,27 @@ namespace CircuitProcessor
                 return;
             }
 
-            if (asciiDrawer == null)
+            if (finalProduct == CircuitProductType.TextBased)
             {
-                Debug.LogError($"[{nameof(BuildCircuit)}] - missing: asciiDrawer");
-                return;
-            }
+                if (asciiDrawer == null)
+                {
+                    Debug.LogError($"[{nameof(BuildCircuit)}] - missing: asciiDrawer");
+                    return;
+                }
 
-            if (asciiToText == null)
+                if (asciiToText == null)
+                {
+                    Debug.LogError($"[{nameof(BuildCircuit)}] - missing: asciiToText");
+                    return;
+                }
+            }
+            else if (finalProduct == CircuitProductType.PrefabBased)
             {
-                Debug.LogError($"[{nameof(BuildCircuit)}] - missing: asciiToText");
-                return;
+                if (prefabDrawer == null)
+                {
+                    Debug.LogError($"[{nameof(BuildCircuit)}] - missing: prefabDrawer");
+                    return;
+                }
             }
 
             // Create output directory if it doesn't exist
@@ -78,7 +103,7 @@ namespace CircuitProcessor
         private void BeginCircuitBuild(Texture2D newImage)
         {
             currentBuildNumber++;
-            buildPrefix = $"circuit_{currentBuildNumber:D3}";
+            buildPrefix = $"circuit_{finalProduct}_{currentBuildNumber:D3}";
 
             analyzer.AnalyzeCircuit(newImage, Build);
         }
@@ -91,69 +116,85 @@ namespace CircuitProcessor
         {
             try
             {
-                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Begin building circuit");
+                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Begin building circuit", sendToXRDebugLogViewer, sendToDebugLog);
                 
                 if (data == null)
                 {
-                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] ERROR: Input data is null");
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] ERROR: Input data is null", sendToXRDebugLogViewer, sendToDebugLog);
                     return;
                 }
 
                 // Step 0: get chatgpt result debug
                 if (debugAnalyzer)
                 {
-                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Saving step 0 debug output");
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Saving step 0 debug output", sendToXRDebugLogViewer, sendToDebugLog);
                     SaveDebugOutput(data, $"{buildPrefix}_step0_chatgptoutput.json");
                 }
 
                 // Step 1: Process grid positions and generate wires
-                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Starting grid assignment");
+                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Starting grid assignment", sendToXRDebugLogViewer, sendToDebugLog);
                 currentCircuitData = gridAssigner.InitializeGridAssigner(data);
                 
                 if (currentCircuitData == null)
                 {
-                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] ERROR: Grid assignment failed - returned null");
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] ERROR: Grid assignment failed - returned null", sendToXRDebugLogViewer, sendToDebugLog);
                     return;
                 }
 
                 if (debugGridAssigner)
                 {
-                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Saving step 1 debug output");
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Saving step 1 debug output", sendToXRDebugLogViewer, sendToDebugLog);
                     SaveDebugOutput(currentCircuitData, $"{buildPrefix}_step1_grid.json");
                 }
                 
-                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Grid Assigner Check");
+                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Grid Assigner Check", sendToXRDebugLogViewer, sendToDebugLog);
 
-                // Step 2: Convert to ASCII representation
-                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Starting ASCII conversion");
-                currentCircuitData.ascii = asciiDrawer.InitializeDrawASCIICircuit(currentCircuitData);
-                
-                if (currentCircuitData.ascii == null)
+                // Step 2: Build final product based on type
+                if (finalProduct == CircuitProductType.TextBased)
                 {
-                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] ERROR: ASCII conversion failed - returned null");
-                    return;
+                    // Convert to ASCII representation
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Starting ASCII conversion", sendToXRDebugLogViewer, sendToDebugLog);
+                    currentCircuitData.ascii = asciiDrawer.InitializeDrawASCIICircuit(currentCircuitData);
+                    
+                    if (currentCircuitData.ascii == null)
+                    {
+                        XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] ERROR: ASCII conversion failed - returned null", sendToXRDebugLogViewer, sendToDebugLog);
+                        return;
+                    }
+
+                    if (debugASCIIDrawer)
+                    {
+                        XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Saving step 2 TEXT debug output", sendToXRDebugLogViewer, sendToDebugLog);
+                        SaveDebugOutput(currentCircuitData, $"{buildPrefix}_step2_ascii.json");
+                    }
+                    
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] ASCII Drawer Check", sendToXRDebugLogViewer, sendToDebugLog);
+
+                    // Update text mesh pro
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Starting ASCII to text conversion", sendToXRDebugLogViewer, sendToDebugLog);
+                    asciiToText.InitializeASCIIToText(currentCircuitData);
+                    
+                    if (debugASCIIToImage)
+                    {
+                        XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Saving step 3 TEXT debug output", sendToXRDebugLogViewer, sendToDebugLog);
+                        SaveDebugOutput(currentCircuitData, $"{buildPrefix}_step3_textmeshpro.json");
+                    }
+                    
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] ASCII to Text Check", sendToXRDebugLogViewer, sendToDebugLog);
+                }
+                else // PrefabBased
+                {
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Starting prefab-based circuit building", sendToXRDebugLogViewer, sendToDebugLog);
+                    prefabDrawer.InitializeDrawPrefabCircuit(currentCircuitData);
+                    if (debugPrefabDrawer)
+                    {
+                        XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Saving step 2 PREFAB debug output", sendToXRDebugLogViewer, sendToDebugLog);
+                        SaveDebugOutput(currentCircuitData, $"{buildPrefix}_step2_prefab.json");
+                    }
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Instantiated {prefabDrawer.InstantiatedObjects.Count} objects", sendToXRDebugLogViewer, sendToDebugLog);
                 }
 
-                if (debugASCIIDrawer)
-                {
-                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Saving step 2 debug output");
-                    SaveDebugOutput(currentCircuitData, $"{buildPrefix}_step2_ascii.json");
-                }
-                
-                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] ASCII Drawer Check");
-
-                // Step 3: Update text mesh pro, add the circuit text there and update pixel positions
-                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Starting ASCII to text conversion");
-                asciiToText.InitializeASCIIToText(currentCircuitData);
-                
-                if (debugASCIIToImage)
-                {
-                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Saving step 3 debug output");
-                    SaveDebugOutput(currentCircuitData, $"{buildPrefix}_step3_textmeshpro.json");
-                }
-                
-                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] ASCII to Text Check");
-                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Circuit build completed successfully");
+                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Circuit build completed successfully", sendToXRDebugLogViewer, sendToDebugLog);
             }
             catch (Exception ex)
             {
@@ -169,7 +210,7 @@ namespace CircuitProcessor
         {
             try
             {
-                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Attempting to save debug output to: {filename}");
+                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Attempting to save debug output to: {filename}", sendToXRDebugLogViewer, sendToDebugLog);
                 
                 if (data == null)
                 {
@@ -184,12 +225,12 @@ namespace CircuitProcessor
                 }
 
                 string jsonPath = Path.Combine(outputPath, filename);
-                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Full path: {jsonPath}");
+                XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Full path: {jsonPath}", sendToXRDebugLogViewer, sendToDebugLog);
 
                 // Ensure the directory exists
                 if (!Directory.Exists(outputPath))
                 {
-                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Creating output directory: {outputPath}");
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Creating output directory: {outputPath}", sendToXRDebugLogViewer, sendToDebugLog);
                     Directory.CreateDirectory(outputPath);
                 }
 
@@ -210,7 +251,7 @@ namespace CircuitProcessor
                 try
                 {
                     json = JsonConvert.SerializeObject(data, settings);
-                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Successfully serialized data to JSON");
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Successfully serialized data to JSON", sendToXRDebugLogViewer, sendToDebugLog);
                 }
                 catch (Exception ex)
                 {
@@ -222,7 +263,7 @@ namespace CircuitProcessor
                 try
                 {
                     File.WriteAllText(jsonPath, json);
-                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Successfully wrote debug output to: {jsonPath}");
+                    XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Successfully wrote debug output to: {jsonPath}", sendToXRDebugLogViewer, sendToDebugLog);
                 }
                 catch (Exception ex)
                 {

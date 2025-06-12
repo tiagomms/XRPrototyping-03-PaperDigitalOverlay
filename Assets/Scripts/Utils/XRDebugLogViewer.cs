@@ -117,15 +117,19 @@ public class XRDebugLogViewer : MonoBehaviour
     /// <summary>
     /// Logs a standard info message to the viewer.
     /// </summary>
-    public static void Log(string message)
+    public static void Log(string message, bool isToSendXRDebug = true, bool isToSendToDebugLog = true)
     {
         // Debug: Log the message before passing to AddLog
-        //Debug.Log($"[XRDebugLogViewer] Log called with message: {message}");
-        //Debug.Log($"[XRDebugLogViewer] Message length: {message?.Length ?? 0}");
-        //Debug.Log($"[XRDebugLogViewer] Message bytes: {BitConverter.ToString(System.Text.Encoding.UTF8.GetBytes(message ?? ""))}");
-
-        Instance?.AddLog(message, Instance.infoColor);
-        Instance?.WriteToDebug(message, LogType.Default);
+        
+        if (!isToSendXRDebug)
+        {
+            Instance?.AddLog(message, Instance.infoColor);
+        }
+        
+        if (isToSendToDebugLog)
+        {
+            Instance?.WriteToDebug(message, LogType.Default);
+        }
     }
 
     private void WriteToDebug(string message, LogType type)

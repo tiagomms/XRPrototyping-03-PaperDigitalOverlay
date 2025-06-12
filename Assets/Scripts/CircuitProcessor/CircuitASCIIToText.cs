@@ -21,6 +21,8 @@ namespace CircuitProcessor
         [SerializeField] private bool showDebugMarkers = false;
         [SerializeField] private Color debugMarkerColor = Color.red;
         [SerializeField] private Transform markersParent;
+        [SerializeField] private bool sendToXRDebugLogViewer = true;
+        [SerializeField] private bool sendToDebugLog = true;
 
         private CircuitData circuitData;
         private RectTransform canvasRect;
@@ -161,11 +163,11 @@ namespace CircuitProcessor
             }
 
             // Log some example conversions for verification
-            Debug.Log("Example pixel position conversions:");
+            XRDebugLogViewer.Log("Example pixel position conversions:", sendToXRDebugLogViewer, sendToDebugLog);
             for (int i = 0; i < Mathf.Min(3, circuitData.components.Count); i++)
             {
                 var component = circuitData.components[i];
-                Debug.Log($"{component.id}: ASCII [{component.asciiPosition.x}, {component.asciiPosition.y}] -> Pixel [{component.rectPosition.x:F2}, {component.rectPosition.y:F2}]");
+                XRDebugLogViewer.Log($"{component.id}: ASCII [{component.asciiPosition.x}, {component.asciiPosition.y}] -> Pixel [{component.rectPosition.x:F2}, {component.rectPosition.y:F2}]", sendToXRDebugLogViewer, sendToDebugLog);
             }
         }
 
@@ -190,7 +192,7 @@ namespace CircuitProcessor
             // Add the x position
             charIndex += asciiX;
 
-            XRDebugLogViewer.Log($"[{nameof(CircuitASCIIToText)}] ASCII [{asciiX}, {asciiY}] -> charIndex: {charIndex}");
+            XRDebugLogViewer.Log($"[{nameof(CircuitASCIIToText)}] ASCII [{asciiX}, {asciiY}] -> charIndex: {charIndex}", sendToXRDebugLogViewer, sendToDebugLog);
 
             // Get the character info from TMP
             TMP_TextInfo textInfo = circuitText.textInfo;
@@ -206,7 +208,7 @@ namespace CircuitProcessor
             Vector3 charCenter = (charInfo.bottomLeft + charInfo.topRight) * 0.5f;
             return new Vector2(charCenter.x, charCenter.y);
             /*
-            XRDebugLogViewer.Log($"[{nameof(CircuitASCIIToText)}] ASCII [{asciiX}, {asciiY}] -> CharCenter [{charCenter.x:F2}, {charCenter.y:F2}]");
+            XRDebugLogViewer.Log($"[{nameof(CircuitASCIIToText)}] ASCII [{asciiX}, {asciiY}] -> CharCenter [{charCenter.x:F2}, {charCenter.y:F2}]", sendToXRDebugLogViewer, sendToDebugLog);
 
             Vector3 worldPos = circuitText.transform.TransformPoint(charCenter);
             
@@ -219,7 +221,7 @@ namespace CircuitProcessor
                 targetCanvas.worldCamera,
                 out localPos);
 
-            //XRDebugLogViewer.Log($"[{nameof(CircuitASCIIToText)}] ASCII [{asciiX}, {asciiY}] -> Pixel [{localPos.x:F2}, {localPos.y:F2}]");
+            //XRDebugLogViewer.Log($"[{nameof(CircuitASCIIToText)}] ASCII [{asciiX}, {asciiY}] -> Pixel [{localPos.x:F2}, {localPos.y:F2}]", sendToXRDebugLogViewer, sendToDebugLog);
             return localPos;
             */
         }
