@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using System;
 using Newtonsoft.Json.Linq;
+using System.Linq;
 
 namespace CircuitProcessor
 {
@@ -24,6 +25,11 @@ namespace CircuitProcessor
         [SerializeField] private CircuitASCIIDrawer asciiDrawer;
         [SerializeField] private CircuitASCIIToText asciiToText;
         [SerializeField] private CircuitPrefabDrawer prefabDrawer;
+
+        // FIXME: in the future, for more complex circuits, there won't be a single formula, but multiple
+        [Header("Formula Evaluator")]
+        [SerializeField] private CircuitFormulaEvaluator formulaEvaluator;
+
 
         [Header("Build Settings")]
         [SerializeField] private CircuitProductType finalProduct = CircuitProductType.TextBased;
@@ -149,7 +155,18 @@ namespace CircuitProcessor
                 
                 XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Grid Assigner Check", sendToXRDebugLogViewer, sendToDebugLog);
 
-                // Step 2: Build final product based on type
+                // Step 2: evaluate formula
+                try
+                {
+                    formulaEvaluator.Initialize(currentCircuitData);
+                }
+                catch (Exception ex)
+                {
+                    XRDebugLogViewer.LogError($"[{nameof(BuildCircuit)}] Formula evaluation failed: {ex.Message}");
+                    // Continue with the build process despite formula evaluation failure
+                }
+
+                // Step 3: Build final product based on type
                 if (finalProduct == CircuitProductType.TextBased)
                 {
                     // Convert to ASCII representation
@@ -181,6 +198,8 @@ namespace CircuitProcessor
                     }
                     
                     XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] ASCII to Text Check", sendToXRDebugLogViewer, sendToDebugLog);
+
+                    // TODO: same logic as in prefab based - formula evaluation
                 }
                 else // PrefabBased
                 {
@@ -192,6 +211,17 @@ namespace CircuitProcessor
                         SaveDebugOutput(currentCircuitData, $"{buildPrefix}_step2_prefab.json");
                     }
                     XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Instantiated {prefabDrawer.InstantiatedObjects.Count} objects", sendToXRDebugLogViewer, sendToDebugLog);
+
+                    // assign formula evaluator to thing
+                    // FIXME: in the future, I will need to know which formula to assign to each lightbulb - not in scope now
+                    var lightbulbs = prefabDrawer.InstantiatedObjects
+                        .Where(c => c.GetComponent<Lightbulb>() != null)
+                        .ToList();
+                    
+                    foreach (var l in lightbulbs)
+                    {
+                        l.GetComponent<Lightbulb>().AttachFormulaEvaluator(formulaEvaluator);
+                    }
                 }
 
                 XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Circuit build completed successfully", sendToXRDebugLogViewer, sendToDebugLog);

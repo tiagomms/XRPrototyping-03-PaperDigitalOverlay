@@ -6,43 +6,6 @@ using CircuitProcessor;
 
 namespace CircuitProcessor
 {
-    /// <summary>
-    /// Component data to be attached to instantiated component prefabs
-    /// </summary>
-    [Serializable]
-    public class ComponentData : MonoBehaviour
-    {
-        public Component component;
-
-        public string id => component.id;
-        public string type => component.type;
-        public float value => component.value;
-        public Vector2Int gridPosition => component.gridPosition;
-        public Vector2Int asciiPosition => component.asciiPosition;
-        public Vector2 rectPosition => component.rectPosition;
-    }
-
-    /// <summary>
-    /// Wire data to be attached to instantiated wire prefabs
-    /// </summary>
-    [Serializable]
-    public class WireData : MonoBehaviour
-    {
-        public Wire wire;
-
-        public string id => wire.id;
-        public Vector2Int fromGrid => wire.fromGrid;
-        public Vector2Int toGrid => wire.toGrid;
-        public Vector2Int fromASCII => wire.fromASCII;
-        public Vector2Int toASCII => wire.toASCII;
-        public Vector2 fromRect => wire.fromRect;
-        public Vector2 toRect => wire.toRect;
-        public bool isHorizontal => wire.isHorizontal;
-        public bool startTouchesComponent => wire.startTouchesComponent;
-        public bool endTouchesComponent => wire.endTouchesComponent;
-        public bool isPartOfFork => wire.isPartOfFork;
-        public bool isPartOfMerge => wire.isPartOfMerge;
-    }
 
     /// <summary>
     /// Handles the conversion of circuit data into 3D prefab representation
@@ -78,6 +41,10 @@ namespace CircuitProcessor
         [SerializeField, Range(-0.5f, 0.5f)] private float wireOffsetIfMerge = 0f;
         [SerializeField, Range(-0.5f, 0.5f)] private float wireOffsetIfWire = 0f;
 
+        [Header("Debug")]
+        [SerializeField] private bool sendToXRDebugLogViewer = true;
+        [SerializeField] private bool sendToDebugLog = true;
+
         // Public list to store instantiated objects
         public List<GameObject> InstantiatedObjects { get; private set; } = new List<GameObject>();
 
@@ -100,7 +67,9 @@ namespace CircuitProcessor
 
         private void Start()
         {
+            XRDebugLogViewer.Log("CircuitPrefabDrawer: Starting initialization", sendToXRDebugLogViewer, sendToDebugLog);
             circuitTable.SetActive(false);
+            XRDebugLogViewer.Log("CircuitPrefabDrawer: Circuit table deactivated", sendToXRDebugLogViewer, sendToDebugLog);
         }
 
         /// <summary>
@@ -108,6 +77,7 @@ namespace CircuitProcessor
         /// </summary>
         public void ClearInstantiatedObjects()
         {
+            XRDebugLogViewer.Log($"CircuitPrefabDrawer: Clearing {InstantiatedObjects.Count} objects", sendToXRDebugLogViewer, sendToDebugLog);
             foreach (var obj in InstantiatedObjects)
             {
                 if (obj != null)
@@ -116,6 +86,7 @@ namespace CircuitProcessor
                 }
             }
             InstantiatedObjects.Clear();
+            XRDebugLogViewer.Log("CircuitPrefabDrawer: All objects cleared", sendToXRDebugLogViewer, sendToDebugLog);
         }
 
         /// <summary>
@@ -123,15 +94,18 @@ namespace CircuitProcessor
         /// </summary>
         public void InitializeDrawPrefabCircuit(CircuitData circuitData)
         {
+            XRDebugLogViewer.Log("CircuitPrefabDrawer: Starting circuit initialization", sendToXRDebugLogViewer, sendToDebugLog);
             circuitTable.SetActive(true);
             
             // Clear previous objects before creating new ones
             ClearInstantiatedObjects();
 
             // Initialize positions (reuse logic from ASCII drawer)
+            XRDebugLogViewer.Log("CircuitPrefabDrawer: Initializing positions", sendToXRDebugLogViewer, sendToDebugLog);
             InitializePositions(circuitData);
 
             // Place all wires first
+            XRDebugLogViewer.Log($"CircuitPrefabDrawer: Placing {circuitData.wires.Count} wires", sendToXRDebugLogViewer, sendToDebugLog);
             foreach (var wire in circuitData.wires)
             {
                 var wireObject = PlaceWire(circuitData, wire);
@@ -140,13 +114,14 @@ namespace CircuitProcessor
             }
 
             // Place all components
+            XRDebugLogViewer.Log($"CircuitPrefabDrawer: Placing {circuitData.components.Count} components", sendToXRDebugLogViewer, sendToDebugLog);
             foreach (var component in circuitData.components)
             {
                 var componentObject = PlaceComponent(circuitData, component);
                 if (componentObject != null)
                     InstantiatedObjects.Add(componentObject);
             }
-
+            XRDebugLogViewer.Log("CircuitPrefabDrawer: Circuit initialization complete", sendToXRDebugLogViewer, sendToDebugLog);
         }
 
         /// <summary>
@@ -154,10 +129,12 @@ namespace CircuitProcessor
         /// </summary>
         private Vector2Int CalculateAsciiPosition(Vector2Int gridPosition)
         {
-            return new Vector2Int(
+            var result = new Vector2Int(
                 gridPosition.x * WIRE_LENGTH + HORIZONTAL_PADDING,
                 gridPosition.y * WIRE_LENGTH + VERTICAL_PADDING
             );
+            XRDebugLogViewer.Log($"CircuitPrefabDrawer: Calculated ASCII position {result} from grid position {gridPosition}", sendToXRDebugLogViewer, sendToDebugLog);
+            return result;
         }
 
         /// <summary>
@@ -183,10 +160,16 @@ namespace CircuitProcessor
         /// </summary>
         private GameObject PlaceWire(CircuitData circuitData, Wire wire)
         {
+            XRDebugLogViewer.Log($"CircuitPrefabDrawer: Attempting to place wire from {wire.fromASCII} to {wire.toASCII}", sendToXRDebugLogViewer, sendToDebugLog);
             if (wirePrefab == null)
+            {
+                XRDebugLogViewer.LogError("CircuitPrefabDrawer: ERROR - Wire prefab is null");
                 return null;
+            }
+
             // Instantiate wire
             GameObject wireObject = Instantiate(wirePrefab, parentTransform);
+            XRDebugLogViewer.Log($"CircuitPrefabDrawer: Wire instantiated at {wireObject.transform.position}", sendToXRDebugLogViewer, sendToDebugLog);
             
             // Calculate initial position: (fromASCII.y, 0, fromASCII.x)
             wireObject.transform.localPosition = new Vector3(wire.fromASCII.y, 0, wire.fromASCII.x);
@@ -203,6 +186,7 @@ namespace CircuitProcessor
                 yRotation = -90f;
 
             wireObject.transform.localRotation = Quaternion.Euler(0, yRotation, 0);
+            XRDebugLogViewer.Log($"CircuitPrefabDrawer: Wire rotation set to {yRotation} degrees", sendToXRDebugLogViewer, sendToDebugLog);
 
             // Calculate initial scale based on distance
             Vector3 scale = wireObject.transform.localScale;
@@ -215,13 +199,20 @@ namespace CircuitProcessor
                 scale.z = Mathf.Abs(wire.toASCII.y - wire.fromASCII.y);
             }
             wireObject.transform.localScale = scale;
+            XRDebugLogViewer.Log($"CircuitPrefabDrawer: Wire scale set to {scale}", sendToXRDebugLogViewer, sendToDebugLog);
 
             // Add WireData component
-            WireData wireData = wireObject.AddComponent<WireData>();
-            wireData.wire = wire;
+            WireData wireData = wireObject.GetComponent<WireData>();
+            if (wireData == null)
+            {
+                XRDebugLogViewer.LogError("CircuitPrefabDrawer: ERROR - WireData component not found on wire prefab");
+                return null;
+            }
+            wireData.Initialize(wire);
 
             // Apply wire offsets and scaling
             ApplyWireOffsets(circuitData, wire, wireObject);
+            XRDebugLogViewer.Log("CircuitPrefabDrawer: Wire placement complete", sendToXRDebugLogViewer, sendToDebugLog);
 
             return wireObject;
         }
@@ -313,19 +304,29 @@ namespace CircuitProcessor
         /// </summary>
         private GameObject PlaceComponent(CircuitData circuitData, Component component)
         {
+            XRDebugLogViewer.Log($"CircuitPrefabDrawer: Attempting to place component of type {component.type} at {component.asciiPosition}", sendToXRDebugLogViewer, sendToDebugLog);
             GameObject prefab = GetPrefabForComponentType(component.type);
             if (prefab == null)
+            {
                 return null;
+            }
 
             // Instantiate component
             GameObject componentObject = Instantiate(prefab, parentTransform);
             // Calculate position: (asciiPosition.y, 0, asciiPosition.x)
             componentObject.transform.localPosition = new Vector3(component.asciiPosition.y, 0, component.asciiPosition.x);
             componentObject.transform.localRotation = Quaternion.identity;
+            XRDebugLogViewer.Log($"CircuitPrefabDrawer: Component instantiated at {componentObject.transform.position}", sendToXRDebugLogViewer, sendToDebugLog);
             
             // Add ComponentData component
-            ComponentData componentData = componentObject.AddComponent<ComponentData>();
-            componentData.component = component;
+            CircuitComponentUI componentData = componentObject.GetComponent<CircuitComponentUI>();
+            if (componentData == null)
+            {
+                XRDebugLogViewer.LogError("CircuitPrefabDrawer: ERROR - CircuitComponentUI component not found on prefab");
+                return null;
+            }
+            componentData.Initialize(component);
+            XRDebugLogViewer.Log("CircuitPrefabDrawer: Component placement complete", sendToXRDebugLogViewer, sendToDebugLog);
 
             return componentObject;
         }

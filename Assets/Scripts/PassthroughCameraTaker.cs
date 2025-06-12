@@ -40,7 +40,7 @@ public class PassthroughCameraTaker : MonoBehaviour
 
     private void TakePhoto(InputAction.CallbackContext context)
     {
-#if UNITY_ANDROID
+#if !UNITY_EDITOR
         TakePicture();
 #else
         PlaceFakePicture();
@@ -51,7 +51,7 @@ public class PassthroughCameraTaker : MonoBehaviour
     public void PlaceFakePicture()
     {
         currentPicture = debugFakePictureList[_debugFakePictureIndex];
-        _debugFakePictureIndex += 1 % debugFakePictureList.Count;
+        _debugFakePictureIndex = (_debugFakePictureIndex + 1) % debugFakePictureList.Count;
     }
 
     public void TakePicture()

@@ -2,9 +2,9 @@
   "components": [
     { "id": "V01", "type": "battery", "value": 20 },
     { "id": "R01", "type": "resistor", "value": 50 },
-    { "id": "R02", "type": "resistor", "value": 330 },
+    { "id": "R02", "type": "resistor", "value": 20 },
     { "id": "L01", "type": "lightbulb", "value": 0 },
-    { "id": "R03", "type": "resistor", "value": 2000 }
+    { "id": "R03", "type": "resistor", "value": 130 }
   ],
   "conditionalBranches": [],
   "formula": "V01 / (R01 + R02 + R03 + L01)",

@@ -1,9 +1,9 @@
 {
   "components": [
     { "id": "V01", "type": "battery", "value": 5 },
-    { "id": "R01", "type": "resistor", "value": 200000 },
-    { "id": "R02", "type": "resistor", "value": 1000000 },
-    { "id": "R03", "type": "resistor", "value": 2000000 },
+    { "id": "R01", "type": "resistor", "value": 15 },
+    { "id": "R02", "type": "resistor", "value": 40 },
+    { "id": "R03", "type": "resistor", "value": 60 },
     { "id": "S01", "type": "switch", "value": 0 },
     { "id": "L01", "type": "lightbulb", "value": 0 }
   ],
@@ -16,7 +16,7 @@
       "alwaysIncluded": ["R02"]
     }
   ],
-  "formula": "V01 / (R01 + 1 / (1/R02 + cond(S01, (1/R03))) + L01)",
+  "formula": "V01 / (R01 + 1 / (1/R02 + S01 * (1/R03)) + L01)",
   "verbalPlan": "V01 -> R01 -> [ R03 + S01 || R02 ] -> L01",
   "notes": "S01 is open → R03 path is disabled. R02 is active. Lightbulb placed last per patch rule."
 }

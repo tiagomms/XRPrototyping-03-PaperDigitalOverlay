@@ -150,7 +150,7 @@ Now process the image using full one-pass mode and return the output JSON only."
             await Task.Delay(TimeSpan.FromSeconds(1f));
 
             string jsonResponse = testOutputs[_testIndex].text;
-            _testIndex += 1 % testOutputs.Count;
+            _testIndex = (_testIndex + 1) % testOutputs.Count;
             return jsonResponse;
         }
 

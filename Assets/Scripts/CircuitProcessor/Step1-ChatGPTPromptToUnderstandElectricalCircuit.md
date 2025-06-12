@@ -193,7 +193,7 @@ Parsing failure will occur if:
       "alwaysIncluded": ["R03"]
     }
   ],
-  "formula": "V01 / (R01 + cond(S01, (R02)) + L01)"
+  "formula": "V01 / (R05 + (1 / (S01 * (1 / R01) + (1 / R02))) + L01)"
   "verbalPlan": "V01 -> R05 -> [ R01 + S01 || R02 ] -> L01"
   "notes": "S01 is open -> R01 path is conditional. R02 is always active"
 }
@@ -294,45 +294,50 @@ I = V01 / (R03 + 1 / (1/R01 + 1/R02))
 
 All components in the same parallel fork must be listed inside the same reciprocal block.
 
-#### Switch-Controlled Components
+#### Switch-Controlled Components (Multiplicative Form)
 
-Switches control conditional branches using this format:  
-cond(S01, (R02))
+Switches control conditional branches using multiplicative behavior.  
+Every switch has a `value` of either `0` (open) or `1` (closed), and this is used **as a multiplier** in formulas.
 
-Always include the condition regardless of the switch’s state.
+Instead of wrapping components in `cond(...)`, use the format:  
+S01 * (R02 + L01)
 
-Correct:  
+This represents:  
+- If `S01` is closed (value = 1), the entire expression `(R02 + L01)` is included.  
+- If `S01` is open (value = 0), the whole expression evaluates to 0 (i.e. excluded from the circuit).
+
+This format applies both inside series and reciprocal expressions.
+
+Correct:
+I = V01 / (R01 + S01 * (R02))
+
+Incorrect:
 I = V01 / (R01 + cond(S01, (R02)))
 
-Incorrect:  
-I = V01 / (R01 + R02) ← if R02 is behind a switch
-
-⚠️ Conditional logic must appear in the formula even if switch value is `1`.
+⚠️ This form must always begin with the switch ID, followed by the affected expression in parentheses. Do not move the switch multiplier to the middle or end of an expression. Also, open switches (value = 0) must always be included in the formula. The formula is symbolic, not value based.
 
 #### 💡 Lightbulb Behavior in Formulas
 
 Lightbulbs (`L#`) must always be treated as resistive components.  
 - Follow same rules as `R#`
 - Use default value `0.0` unless labeled
-- In conditionals: included in `formulaFragment` if affected by a switch
+- If controlled by a switch, appear **inside** the switch’s multiplier expression
 
 #### 📐 Formula Grammar & Expression Rules
 
 - Use symbolic expressions only — never numerical substitutions at this stage.
 - All formulas must conform to the pattern:
 
-  `I = V01 / ( ... )`  
-  or  
-  just the resistance part: `V01 / (R01 + R02)` if preferred
+  I = V01 / ( ... )
 
-- Use `cond(Sx, (...))` for any branch affected by a switch.
-  - Example: `V01 / (R01 + cond(S01, (R02 + L01)))`
-  - This represents: if S01 is closed, R02 and L01 are part of the loop; if open, they are excluded.
-- Do not nest `cond(...)` blocks. Only top-level usage or series-level is permitted.
+- Use `Sx * (...)` for any branch affected by a switch.
+  - Example: `V01 / (S01 * (R01 + R02 + L01))`
+  - This represents: if S01 = 1, R01, R02 and L01 are included; otherwise, the whole term evaluates to 0.
+- Do not use `cond(...)` expressions.
+- Do not nest switch multipliers.
+- Always keep the switch ID on the **left side** of the multiplication.
 
-> Avoid recursion or nesting beyond one level for parsing simplicity.
-
-All components in the same parallel fork must be listed inside the same reciprocal block.
+All components in the same parallel fork must be listed inside the same reciprocal block, and switch-controlled segments inside those forks must also use the `Sx * (...)` form.
 
 > 📎 Optional: In future versions, formulas may be converted to pseudocode or structured JSON tables for executable use. This document assumes symbolic math but is compatible with structured transformations.
 
@@ -410,7 +415,7 @@ This ensures compatibility with text parsers, visualization engines, and markdow
       "alwaysIncluded": ["R03"]
     }
   ],
-  "formula": "V01 / (R01 + cond(S01, (R02)) + L01)",
+  "formula": "V01 / (R01 + S01 * (R02) + L01)",
   "verbalPlan": "V01 -> R01 + S01 || R02 -> L01",
   "notes": "S01 is open -> R02 path is disabled. R01 and L01 are in series."
 }

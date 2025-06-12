@@ -35,14 +35,26 @@ public class PassthroughCameraDisplay : MonoBehaviour
         // FIXME: where to place quad, and how long
         quadRenderer.gameObject.SetActive(true);
         quadRenderer.material.SetTexture(textureName, _currentPicture);
-#if UNITY_ANDROID
         PlaceQuad();
+        /*
+#if !UNITY_EDITOR
+        PlaceQuadInFrontOfMe();
 #else
-        DebugPlaceQuad();
+        DebugPlaceQuadInFrontOfMe();
 #endif
+        */
     }
 
-    private void DebugPlaceQuad()
+    private void PlaceQuad()
+    {
+        Transform quadTransform = quadRenderer.transform;
+
+        float ratio = (float)_currentPicture.height / (float)_currentPicture.width;
+        quadTransform.localScale = new Vector3(quadTransform.localScale.x, quadTransform.localScale.y * ratio, 1);
+    }
+
+    #region DEPRECATED METHODS
+    private void DebugPlaceQuadInFrontOfMe()
     {
         Transform quadTransform = quadRenderer.transform;
 
@@ -55,14 +67,15 @@ public class PassthroughCameraDisplay : MonoBehaviour
     }
 
     // TODO: improve based on cropped image later
-    public void PlaceQuad()
+#if UNITY_ANDROID
+    public void PlaceQuadInFrontOfMe()
     {
         Transform quadTransform = quadRenderer.transform;
 
         Pose cameraPose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
 
         Vector2Int resolution = PassthroughCameraUtils.GetCameraIntrinsics(PassthroughCameraEye.Left).Resolution;
-
+        
         quadTransform.position = cameraPose.position + cameraPose.forward * quadDistance;
         quadTransform.rotation = cameraPose.rotation;
 
@@ -74,8 +87,11 @@ public class PassthroughCameraDisplay : MonoBehaviour
         float quadScale = 2 * quadDistance * Mathf.Tan((horizontalFov * Mathf.Deg2Rad) / 2);
 
         float ratio = (float)_currentPicture.height / (float)_currentPicture.width;
-        quadTransform.localScale = new Vector3(quadScale, quadScale * ratio, 1);
+        
+        // maintain quadTransform scale but update ratio
+        quadTransform.localScale = new Vector3(quadTransform.localScale.x * quadScale, quadTransform.localScale.y * quadScale * ratio, 1);
     }
-
+#endif
+    #endregion
 
 }
