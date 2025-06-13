@@ -22785,7 +22785,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5518670934586006478, guid: 8f403dcd176949148ab24331defe47fb, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 217.0009
+      value: 217.00005
       objectReference: {fileID: 0}
     - target: {fileID: 6204767134508456339, guid: 8f403dcd176949148ab24331defe47fb, type: 3}
       propertyPath: m_AnchorMax.y
@@ -25178,7 +25178,7 @@ MonoBehaviour:
   testOutputs:
   - {fileID: 4900000, guid: ea4866ebd1f853141ae9d3980376e5f1, type: 3}
   - {fileID: 4900000, guid: 8c48130548855284ba8bff73f085d276, type: 3}
-  openAIConfiguration: {fileID: 11400000, guid: b2d8f853b4c31244b99d877508e33866, type: 2}
+  openAIConfiguration: {fileID: 11400000, guid: 342b9d4d2a064bd48a148b36bc4c37da, type: 2}
   systemPromptFile: {fileID: 4900000, guid: 10df362a8f0d567468a61ee23aff2593, type: 3}
   sendToXRDebugLogViewer: 1
   sendToDebugLog: 1

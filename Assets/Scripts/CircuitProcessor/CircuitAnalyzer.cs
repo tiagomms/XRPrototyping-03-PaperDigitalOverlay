@@ -71,22 +71,25 @@ Now process the image using full one-pass mode and return the output JSON only."
         /// </summary>
         private void InitializeOpenAI()
         {
-            // NOTE: this implementation did not work when building for android
-            
+            // NOTE: https://github.com/RageAgainstThePixel/com.openai.unity?tab=readme-ov-file#load-key-from-configuration-file
+            // NOTE: Regarding this initializing openAI a few very important notes: 
+            /**
+             *      (1) the recommended implementation does not work in android because local files need to be obtained through URL requests
+             *      (2) using a scriptable object OpenAIConfiguration is the way to go. 
+                        BUT! you can only place the api-key and nothing else. 
+                        The generated default OpenAISettings crash if you add more stuff for unknown reasons.
+                        This crashing bug happens for all platforms (not just android)
+             **/
+            // NOTE: Regardless of your solution please gitignore the file from your repo.
+            // NOTE: if you use this go to the Project > Create > OpenAI > OpenAIConfiguration
+            /*
             // NOTE: Created .openai and added to Assets/StreamingAssets folder. (as mentioned in:
-            // NOTE: https://github.com/RageAgainstThePixel/com.openai.unity?tab=readme-ov-file#load-key-from-configuration-file. 
-            // NOTE: Added to .gitignore.
-            
+            // NOTE: Added to .gitignore.            
             string path = Path.Combine(Application.streamingAssetsPath, ".openai");
             openAIClient = new OpenAIClient(new OpenAIAuthentication().LoadFromPath(path));
-            
-
-            /*
-            var auth = new OpenAIAuthentication(openAIConfiguration);
-            openAIClient = new OpenAIClient(auth);
-            //var settings = new OpenAISettings(openAIConfiguration);
-            //openAIClient = new OpenAIClient(auth, settings);
             */
+
+            openAIClient = new OpenAIClient(openAIConfiguration);
             Debug.Log("OpenAI Client initialized successfully.");
         }
 
