@@ -56,7 +56,7 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "03-PaperDigitalOverlay.sln",
+    "dotnet.defaultSolution": "03-PapeXR.sln",
     "better-comments.tags": [
         {
             "tag": "!",
