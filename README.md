@@ -14,18 +14,30 @@ This is my third one-week solo prototype for the XR Bootcamp XR Prototyping cour
 
 The core question: What happens when pen-and-paper educational tools become interactive through XR?
 
+## Project Setup (to use ChatGPT integration)
+1. Create your own OpenAIConfiguration file in the Resources folder. **Set the API Key value only (there is a bug when you set the other values)**.
+2. Go to Scenes > ElectricalCircuitOverlay. Open CircuitWorkshop gameObject, change the CircuitAnalyzer script to **not test mode** and assign your OpenAIConfiguration file
+
+![How to create OpenAIConfiguration file](./Images/SetupOpenAIConfigurationResources.gif)
+
+![Activate ChatGPT integration in scene](./Images/CircuitWorkshopSetup.gif)
+
 ## 🔧 Core Features
 
 - Capture camera frame and display visual overlay
-- Integrate ChatGPT or LLAMA for diagram parsing (block-level: battery, resistor, lightbulb, wire)
+- Integrate ChatGPT for diagram parsing (block-level: battery, resistor, lightbulb, wire)
 - Adjust resistor/lightbulb values through sliders
 - Live update of lightbulb intensity based on parameter changes
 - Support for switches and parallel circuits
+- Working MR UI (although clunky)
 
 ## 🌟 Next Steps
-- Improve MR UI - and make it work
-- Improve Formula layout for easier reading
 - Hand Tracking (hand menu to take photos and place a camera frame)
+- Design the idea on ShapesXR (right now my circuit workshop is too big)
+- Occlusion vs no occlusion (test it out - again in ShapesXR)
+- Improve MR UI (probably unifying canvas for changing instead of multiple canvas)
+  - Read: https://developers.meta.com/horizon/documentation/unity/unity-isdk-direct-touch/ for starters
+- Improve Formula layout for easier reading
 - Enforce limits to avoid unrealistic values
 - Support more complex components (transistors, condensors)
 - Clean UI for sliders (log scale for resistors)
@@ -51,6 +63,7 @@ The core question: What happens when pen-and-paper educational tools become inte
 - Importance of prototyping flow before solving AI limitations
 - Need for fallback logic (e.g., assuming component grid) for better reliability
 - Vision models recognize *what* but not *where* — essential for diagram overlays
+- Making Meta SDK MR UI is not easy
 
 ## ✅ What Worked
 
@@ -61,11 +74,9 @@ The core question: What happens when pen-and-paper educational tools become inte
 
 ## ⚠️ Challenges and What I'd Do Differently
 
-- Over-scoped vision task before locking down the prototype flow
 - UI and interaction design came too late in the process
-- Parallel and switch logic introduced complexity beyond week scope
 - Would prototype first, design second, AI basic prompt next
-
+- Parallel and switch logic introduced complexity beyond week scope
 
 ## 🪪 License
 

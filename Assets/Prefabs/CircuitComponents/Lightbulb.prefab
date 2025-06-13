@@ -282,6 +282,9 @@ MonoBehaviour:
   editableOptions: {fileID: 3994552559766803739}
   initialOffset: 9.5
   gridFactor: 1.5
+  OnComponentValueChanged:
+    m_PersistentCalls:
+      m_Calls: []
   sliderParent: {fileID: 862699163399215100}
   slider: {fileID: 8525801789357615902}
   minValueUIText: {fileID: 6610879446089160245}
@@ -460,6 +463,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8285398804968839080}
     m_Modifications:
+    - target: {fileID: 16520047039434216, guid: 0dbc0a16103ce104cbb610b48f1f34bf, type: 3}
+      propertyPath: m_WholeNumbers
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2997758961760834800, guid: 0dbc0a16103ce104cbb610b48f1f34bf, type: 3}
       propertyPath: m_Name
       value: CircuitComponentUI

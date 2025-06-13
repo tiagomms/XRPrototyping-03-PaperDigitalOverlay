@@ -58,7 +58,9 @@ namespace CircuitProcessor
             // NOTE: editable UI should be placed at the bottom of the table and ideally never let it
             // NOTE: since editableUI is child of the object, we need to counter the offset of the parent x position
             // NOTE: by observation - a grid factor looks good 
-            editableUI.transform.localPosition = Vector3.right * (initialOffset + component.gridPosition.y * gridFactor - transform.localPosition.x);
+            Vector3 newLocalPosition = editableUI.transform.localPosition;
+            newLocalPosition.x = (initialOffset + component.gridPosition.y * gridFactor - transform.localPosition.x);
+            editableUI.transform.localPosition = newLocalPosition;
             editableUI.SetActive(hasEditableUI);
 
             for (int i = 0; i < editableOptions.transform.childCount; i++)

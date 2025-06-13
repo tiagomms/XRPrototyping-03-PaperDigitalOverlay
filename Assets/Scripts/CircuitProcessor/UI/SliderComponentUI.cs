@@ -12,12 +12,14 @@ namespace CircuitProcessor
         [Header("Slider References")]
         [SerializeField] private GameObject sliderParent;
         [SerializeField] private Slider slider;
+        
+        [SerializeField] protected float minValue = 0f;
+        [SerializeField] protected float maxValue = 10f;
+        [SerializeField] protected bool wholeNumbers = true;
 
         [SerializeField] private TextMeshProUGUI minValueUIText;
         [SerializeField] private TextMeshProUGUI maxValueUIText;
 
-        [SerializeField] protected float minValue = 0f;
-        [SerializeField] protected float maxValue = 10f;
 
         public override void Initialize(Component component)
         {
@@ -31,6 +33,7 @@ namespace CircuitProcessor
             minValueUIText.text = NumberFormatter.FormatRoundedAbbreviation(minValue, 0);
             maxValueUIText.text = NumberFormatter.FormatRoundedAbbreviation(maxValue, 0);
 
+            slider.wholeNumbers = wholeNumbers;
             slider.minValue = minValue;
             slider.maxValue = maxValue;
             slider.value = component.Value;

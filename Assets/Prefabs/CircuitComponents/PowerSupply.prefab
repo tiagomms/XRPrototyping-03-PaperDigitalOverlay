@@ -199,12 +199,16 @@ MonoBehaviour:
   editableOptions: {fileID: 4900065646115726663}
   initialOffset: 9.5
   gridFactor: 1.5
+  OnComponentValueChanged:
+    m_PersistentCalls:
+      m_Calls: []
   sliderParent: {fileID: 8689672995569559456}
   slider: {fileID: 377946485651233602}
-  minValueUIText: {fileID: 2941281604964116073}
-  maxValueUIText: {fileID: 5562595647245263300}
   minValue: 0
   maxValue: 220
+  wholeNumbers: 1
+  minValueUIText: {fileID: 2941281604964116073}
+  maxValueUIText: {fileID: 5562595647245263300}
 --- !u!1001 &361427848775079594
 PrefabInstance:
   m_ObjectHideFlags: 0
