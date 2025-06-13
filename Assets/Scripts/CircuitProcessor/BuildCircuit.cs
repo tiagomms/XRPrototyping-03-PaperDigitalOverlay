@@ -205,6 +205,16 @@ namespace CircuitProcessor
                 {
                     XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Starting prefab-based circuit building", sendToXRDebugLogViewer, sendToDebugLog);
                     prefabDrawer.InitializeDrawPrefabCircuit(currentCircuitData);
+                    // FIXME: in the future, I will need to know which formula to assign to each component - not in scope now (we assume all circuits are simple)
+                    
+                    // assign formula evaluator to thing
+                    foreach (var obj in prefabDrawer.InstantiatedObjects)
+                    {
+                        if (obj.TryGetComponent<CircuitComponentUI>(out var componentUI))
+                        {
+                            componentUI.AttachFormulaEvaluator(formulaEvaluator);
+                        }
+                    }
                     if (debugPrefabDrawer)
                     {
                         XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Saving step 2 PREFAB debug output", sendToXRDebugLogViewer, sendToDebugLog);
@@ -212,16 +222,8 @@ namespace CircuitProcessor
                     }
                     XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Instantiated {prefabDrawer.InstantiatedObjects.Count} objects", sendToXRDebugLogViewer, sendToDebugLog);
 
-                    // assign formula evaluator to thing
-                    // FIXME: in the future, I will need to know which formula to assign to each lightbulb - not in scope now
-                    var lightbulbs = prefabDrawer.InstantiatedObjects
-                        .Where(c => c.GetComponent<Lightbulb>() != null)
-                        .ToList();
                     
-                    foreach (var l in lightbulbs)
-                    {
-                        l.GetComponent<Lightbulb>().AttachFormulaEvaluator(formulaEvaluator);
-                    }
+                    
                 }
 
                 XRDebugLogViewer.Log($"[{nameof(BuildCircuit)}] Circuit build completed successfully", sendToXRDebugLogViewer, sendToDebugLog);

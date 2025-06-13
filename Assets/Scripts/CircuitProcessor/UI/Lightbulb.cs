@@ -15,7 +15,6 @@ namespace CircuitProcessor
 
         [Header("Debug")]
         [SerializeField] private float intensity;
-        private CircuitFormulaEvaluator formulaEvaluator;
 
         private Material mat;
         private Color currentColor;
@@ -34,30 +33,6 @@ namespace CircuitProcessor
         public override void Initialize(Component component)
         {
             base.Initialize(component);
-        }
-
-        public void AttachFormulaEvaluator(CircuitFormulaEvaluator formulaEvaluator)
-        {
-            this.formulaEvaluator = formulaEvaluator;
-            SetNewLightIntensity(this.formulaEvaluator.GetCurrentValue());
-
-            this.formulaEvaluator.OnCalculatingFormula.AddListener(SetNewLightIntensity);
-        }
-
-        public void DetachFormulaEvaluator()
-        {
-            if (formulaEvaluator != null)
-            {
-                this.formulaEvaluator.OnCalculatingFormula.RemoveListener(SetNewLightIntensity);
-                intensity = 0f;
-                this.formulaEvaluator = null;
-            }
-
-        }
-
-        void OnDestroy()
-        {
-            DetachFormulaEvaluator();
         }
 
         public void SetNewLightIntensity(float newIntensity)
@@ -83,9 +58,22 @@ namespace CircuitProcessor
             return newIntensity / intensityToBrightnessFactor;
         }
 
-        protected override void UpdateDisplayUI()
+        public override void AttachFormulaEvaluator(CircuitFormulaEvaluator formulaEvaluator)
         {
-            base.UpdateDisplayUI();
+            base.AttachFormulaEvaluator(formulaEvaluator);
+
+            SetNewLightIntensity(this.formulaEvaluator.GetCurrentValue());
+            this.formulaEvaluator.OnCalculatingFormula.AddListener(SetNewLightIntensity);
+        }
+
+        public override void DetachFormulaEvaluator()
+        {
+            if (formulaEvaluator != null)
+            {
+                this.formulaEvaluator.OnCalculatingFormula.RemoveListener(SetNewLightIntensity);
+                intensity = 0f;
+                this.formulaEvaluator = null;
+            }
         }
 
         void Update()

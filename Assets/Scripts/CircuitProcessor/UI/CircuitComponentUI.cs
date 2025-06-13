@@ -1,6 +1,7 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using Utils;
 
 namespace CircuitProcessor
@@ -40,9 +41,13 @@ namespace CircuitProcessor
         [SerializeField] protected float initialOffset = 9.5f;
         [SerializeField] protected float gridFactor = 1.5f;
 
+        public UnityEvent<Component> OnComponentValueChanged;
+
+        protected CircuitFormulaEvaluator formulaEvaluator;
+
         public string id => component.id;
         public string type => component.type;
-        public float value => component.value;
+        public float value => component.Value;
         public Vector2Int gridPosition => component.gridPosition;
         public Vector2Int asciiPosition => component.asciiPosition;
         public Vector2 rectPosition => component.rectPosition;
@@ -80,6 +85,24 @@ namespace CircuitProcessor
             {
                 editableDisplayUIText.text = uiText;
             }
+        }
+
+        public virtual void AttachFormulaEvaluator(CircuitFormulaEvaluator formulaEvaluator)
+        {
+            this.formulaEvaluator = formulaEvaluator;
+        }
+
+        public virtual void DetachFormulaEvaluator()
+        {
+            if (formulaEvaluator != null)
+            {
+                this.formulaEvaluator = null;
+            }
+        }
+
+        protected virtual void OnDestroy()
+        {
+            DetachFormulaEvaluator();
         }
     }
 }

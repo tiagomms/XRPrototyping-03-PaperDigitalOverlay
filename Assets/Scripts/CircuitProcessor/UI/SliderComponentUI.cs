@@ -1,5 +1,6 @@
 using System;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using Utils;
@@ -32,18 +33,19 @@ namespace CircuitProcessor
 
             slider.minValue = minValue;
             slider.maxValue = maxValue;
-            slider.value = component.value;
+            slider.value = component.Value;
             slider.onValueChanged.AddListener(OnSliderChanged);
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
             slider.onValueChanged.RemoveListener(OnSliderChanged);
         }
 
         private void OnSliderChanged(float newValue)
         {
-            component.value = newValue;
+            component.SetValue(newValue);
             UpdateDisplayUI();
         }
     }

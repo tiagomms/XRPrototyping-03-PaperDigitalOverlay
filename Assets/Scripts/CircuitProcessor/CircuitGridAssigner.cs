@@ -242,14 +242,14 @@ namespace CircuitProcessor
                     // Create fork node
                     var forkId = $"F{forkCounter:D2}";
                     var fork = new Component
-                    {
-                        id = forkId,
-                        type = "fork",
-                        value = 0,
-                        gridPosition = new Vector2Int(currentX, currentY),
-                        asciiPosition = Vector2Int.zero,
-                        rectPosition = Vector2.zero
-                    };
+                    (
+                        forkId,
+                        "fork",
+                        0,
+                        new Vector2Int(currentX, currentY),
+                        Vector2Int.zero,
+                        Vector2.zero
+                    );
                     allComponents.Add(fork);
                     forkCounter++;
 
@@ -292,14 +292,14 @@ namespace CircuitProcessor
                             {
                                 var originalComp = componentDict[compId];
                                 var branchComp = new Component
-                                {
-                                    id = originalComp.id,
-                                    type = originalComp.type,
-                                    value = originalComp.value,
-                                    gridPosition = new Vector2Int(branchX, branchY),
-                                    asciiPosition = Vector2Int.zero,
-                                    rectPosition = Vector2.zero
-                                };
+                                (
+                                    originalComp.id,
+                                    originalComp.type,
+                                    originalComp.Value,
+                                    new Vector2Int(branchX, branchY),
+                                    Vector2Int.zero,
+                                    Vector2.zero
+                                );
                                 allComponents.Add(branchComp);
                                 XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Placed component {compId} at position {branchComp.gridPosition}", sendToXRDebugLogViewer, sendToDebugLog);
                                 branchX++; // Move to next X position for series components
@@ -315,14 +315,14 @@ namespace CircuitProcessor
                     var mergeX = currentX + maxBranchLength + 1;
                     var mergeId = $"M{mergeCounter:D2}";
                     var merge = new Component
-                    {
-                        id = mergeId,
-                        type = "merge",
-                        value = 0,
-                        gridPosition = new Vector2Int(mergeX, currentY),
-                        asciiPosition = Vector2Int.zero,
-                        rectPosition = Vector2.zero
-                    };
+                    (
+                        mergeId,
+                        "merge",
+                        0,
+                        new Vector2Int(mergeX, currentY),
+                        Vector2Int.zero,
+                        Vector2.zero
+                    );
                     allComponents.Add(merge);
                     mergeCounter++;
 
@@ -338,14 +338,14 @@ namespace CircuitProcessor
                     {
                         var originalComp = componentDict[token];
                         var seriesComp = new Component
-                        {
-                            id = originalComp.id,
-                            type = originalComp.type,
-                            value = originalComp.value,
-                            gridPosition = new Vector2Int(currentX, currentY),
-                            asciiPosition = Vector2Int.zero,
-                            rectPosition = Vector2.zero
-                        };
+                        (
+                            originalComp.id,
+                            originalComp.type,
+                            originalComp.Value,
+                            new Vector2Int(currentX, currentY),
+                            Vector2Int.zero,
+                            Vector2.zero
+                        );
                         allComponents.Add(seriesComp);
                         XRDebugLogViewer.Log($"[{nameof(CircuitGridAssigner)}] Placed series component {token} at position {seriesComp.gridPosition}", sendToXRDebugLogViewer, sendToDebugLog);
                         currentX += 1;

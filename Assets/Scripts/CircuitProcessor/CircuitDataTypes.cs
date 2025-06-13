@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
+using UnityEngine.Events;
 
 /// <summary>
 /// Shared data types for circuit processing across different steps
@@ -16,10 +17,58 @@ namespace CircuitProcessor
     {
         public string id;
         public string type;
-        public float value;
+        private float value;
         public Vector2Int gridPosition;
         public Vector2Int asciiPosition;
         public Vector2 rectPosition;  // Position in pixels
+
+        [NonSerialized] // UnityEvent can't be serialized by Newtonsoft.Json
+        public UnityEvent<Component> OnValueChanged;
+
+        public float Value 
+        { 
+            get => value;
+            private set
+            {
+                this.value = value;
+                OnValueChanged?.Invoke(this);
+            }
+        }
+
+        public Component(string id, string type, float value, Vector2Int gridPosition, Vector2Int asciiPosition, Vector2 rectPosition)
+        {
+            this.id = id;
+            this.type = type;
+            this.value = value;
+            this.gridPosition = gridPosition;
+            this.asciiPosition = asciiPosition;
+            this.rectPosition = rectPosition;
+            this.OnValueChanged = new UnityEvent<Component>();
+        }
+
+        public void SetValue(float newValue)
+        {
+            Value = newValue;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Component other)
+            {
+                return id == other.id;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return id?.GetHashCode() ?? 0;
+        }
+
+        public override string ToString()
+        {
+            return $"Component {id} of type {type}: {Value}. Positions - Grid {gridPosition}, Circuit {asciiPosition}";
+        }
     }
 
     /// <summary>
@@ -87,7 +136,7 @@ namespace CircuitProcessor
             additionalData = new Dictionary<string, object>();
         }
 
-        public CircuitData(List<Component> components, List<Wire> wires, string formula, string verbalPlan, 
+        public CircuitData(List<Component> components, List<Wire> wires, string formula, string verbalPlan,
             List<Violation> violations, List<object> conditionalBranches, string notes)
         {
             this.components = components;
@@ -103,4 +152,4 @@ namespace CircuitProcessor
             additionalData = new Dictionary<string, object>();
         }
     }
-} 
+}

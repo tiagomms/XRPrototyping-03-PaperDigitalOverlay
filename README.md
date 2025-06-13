@@ -1,121 +1,74 @@
-# BabyProofXR - XR Object Detection and Scene Understanding Prototype
+# Electric Circuitry on Paper - XR Prototype
 
-## Quick Links 🔗
-## 🎥 [Watch Demo Video](https://drive.google.com/file/d/1aU9OYlAb_z5OmiX8clfsm6wi6I74qJLe/view?usp=drive_link)
-## 📱 [Download APK](https://drive.google.com/file/d/1CVoA_bwxz7JGS89kzdAMkReVcJxWQTKv/view?usp=drive_link)
+## 🔗 Quick Links
+- 🎥 [Demo Video](https://drive.google.com/drive/folders/1DpqpQhZ-8qEUeOk7zoXvyyg3w5n1P2eK?usp=sharing)
+- 📑 [Pitch Slides](https://docs.google.com/presentation/d/1LsEf7hn1IQdoLrYC37tWsQS3RmQxMj75_3sOZfT_LSI/edit?slide=id.g3591e20ec8f_1_572)
+- 🧪 [Prototype Template](https://docs.google.com/presentation/d/1xPvcyEnag4ImKNE3sgDFsOz5TSLzHkCcf3SfGvC89ek/edit?usp=sharing)
+- 💾 [GitHub Repo](https://github.com/tiagomms/XRPrototyping-03-PaperDigitalOverlay)
 
-## Overview 🎯
-This project is the second one-week solo prototype developed for the XR Bootcamp XR Prototyping course (May-July 2025). 
+## 🧠 Overview
 
-I wanted parents of toddlers coming to new locations (or in their own homes) to know what areas they need to be more careful and what sort of easy adjustments they can do - that don't involve buying stuff. Since toddlers have a tendency to go about anywhere dangerous, it seemed an interesting challenge. For this first prototype, I am focusing on eminent danger (objects around that are hazardous) and in danger locations.
+This is my third one-week solo prototype for the XR Bootcamp XR Prototyping course (May–July 2025).
 
-Again, in XR with camera access + AI we can start doing this sort of analysis.
+**"Electric Circuitry on Paper"** explores the idea of digital overlays on top of hand-drawn electric circuit diagrams. Inspired by Aaditya Vaze's hackathon demo, I built a system where camera frames are used to detect a circuit and augment it with editable parameters. Users can adjust component values (like resistors) and observe real-time feedback through the brightness of a digital lightbulb.
 
-In addition to this, I can tell my partner and my baby that I am working on important stuff. 😎
+The core question: What happens when pen-and-paper educational tools become interactive through XR?
 
-## Tech Stack
-- **Unity**: 6000.0.39f1
-- **Meta XR SDK**: 
-  - All-in-one SDK v76
-  - Camera Access API
-  - Scene Understanding and MRUK
-- **AI/ML**: 
-  - Unity Sentis
-  - YoloV8 for object detection
+## 🔧 Core Features
 
-## Core Features
-- Real-time object detection using Unity Sentis and YoloV8
-- Integration with Meta's Scene Understanding (MRUK)
-- Camera access and environment raycasting
-- Object filtering based on dangerous labels
-- Scene anchor detection and labeling
-- Camera access does not work on Oculus Link, so I had to create a way of avoiding it and still test Unity Sentis. Built a simulation that runs a set of images that on Unity Sentis and change every x seconds. It was a child of the camera, so I could move the images to the areas where scene understanding considered ok.
+- Capture camera frame and display visual overlay
+- Integrate ChatGPT or LLAMA for diagram parsing (block-level: battery, resistor, lightbulb, wire)
+- Adjust resistor/lightbulb values through sliders
+- Live update of lightbulb intensity based on parameter changes
+- Support for switches and parallel circuits
 
-## Project Structure
-Assets/
-├── Scenes/
-│ └── MultiObjectDetection/
-│ └── SentisInference/
-│ └── Scripts/
-│ ├── BabyProofxrFilter.cs
-│ ├── BabyProofxrInferenceRunManager.cs
-│ └── BabyProofxrInferenceUiManager.cs
-└── Scripts/
-└── BoundingZones/
-├── BoundingZoneChecker.cs
-├── BoundingZoneManager.cs
-└── LabelOffsetConfig.cs
+## 🌟 Next Steps
+- Improve MR UI - and make it work
+- Improve Formula layout for easier reading
+- Hand Tracking (hand menu to take photos and place a camera frame)
+- Enforce limits to avoid unrealistic values
+- Support more complex components (transistors, condensors)
+- Clean UI for sliders (log scale for resistors)
+- Faster AI processing times: perhaps Unity Grok integration?
+- Real overlay aligned on actual paper diagram
+
+## 🧰 Tech Stack
+
+- Meta XR SDK v77 (Camera Passthrough + Camera Access API)
+- Unity (6.0 or later)
+- Unity ChatGPT integration
+- Occlusion
+
+## 📚 Inspiration and References
+
+- Aaditya Vaze's hackathon: https://www.linkedin.com/posts/aadityav_electronic-circuit-from-a-sketch-building-activity-7284585048605937665-_dhx
+- Learnable Programming by Bret Victor: https://worrydream.com/LearnableProgramming/
+
+## 🧪 Key Learnings
+
+- First implementation of camera capture pipeline with ChatGPT vision input
+- Challenges with image rectification and determining symbol position from AI
+- Importance of prototyping flow before solving AI limitations
+- Need for fallback logic (e.g., assuming component grid) for better reliability
+- Vision models recognize *what* but not *where* — essential for diagram overlays
+
+## ✅ What Worked
+
+- Successful camera image capture
+- AI interpretation of symbol types
+- Creating electrical diagrams (and make the code for that to work and create wires that make sense)
+- Pipeline from JSON to diagram interpretation (early proof)
+
+## ⚠️ Challenges and What I'd Do Differently
+
+- Over-scoped vision task before locking down the prototype flow
+- UI and interaction design came too late in the process
+- Parallel and switch logic introduced complexity beyond week scope
+- Would prototype first, design second, AI basic prompt next
 
 
-## Known Limitations
-1. **AI Model and Environment Ray Manager**:
-   - Current implementation of AI model for object detection and Meta's environment ray manager are still in early stages
-   - Some performance and accuracy limitations exist
+## 🪪 License
 
-2. **Scene Understanding**:
-   - Meta's scene understanding creates block-based representations of structures
-   - Limited ability to recognize complex structures like shelves
-   - Objects on shelves may not be properly detected
+This is a student prototype developed for educational purposes as part of XR Bootcamp. No production guarantees are provided.
 
-3. **Detection Accuracy**:
-   - False positives in object detection
-   - Need for better filtering of non-relevant objects
-
-## Development Notes
-### What Worked Well
-- Successful integration of Camera Access with Scene Understanding
-- Basic object detection implementation
-- Label-based filtering system
-- Understanding of MRUK anchor system
-
-### Areas for Improvement
-1. **Code Quality**:
-   - Need to better adhere to SOLID principles
-   - More robust error handling
-   - Better separation of concerns
-
-2. **Development Process**:
-   - Avoid last-minute major changes
-   - Better planning for integration points
-   - More thorough testing of component interactions
-
-3. **Feature Enhancements**:
-   - Reduce false positives in object detection
-   - Show areas where toddlers can navigate
-   - Handle shelves with scene understanding
-   - Implement object tracking to provide feedback on safe locations
-   - Integrate voice SDK for:
-     - Triggering the experience
-     - Providing contextual cues
-   - Create custom AI model for:
-     - Home appliance detection
-     - Fruit detection
-   - Better object categorization
-   - Improved scene understanding
-   - More accurate danger zone detection
-
-## Lessons Learned
-1. **Development Process**:
-   - Importance of proper planning for major integrations
-   - Value of following SOLID principles
-   - Need for thorough testing of component interactions
-
-2. **Technical Insights**:
-   - Understanding of object detection basics
-   - Experience with Unity Sentis implementation
-   - Deep dive into Meta Scene Understanding SDK
-   - Integration challenges between different systems
-   - Importance of proper scene understanding
-
-## Contributing
-This is a prototype project. While contributions are welcome, please note that this is primarily a learning exercise and may not be actively maintained.
-
-## Contributions/Assets Used
-
-This project utilizes the following third-party assets:
-
-- [Question 3D icon](https://sketchfab.com/3d-models/question-3d-icon-ba8c685715a849fab6f289a2469d1567)
-- [Exclamation Point](https://sketchfab.com/3d-models/exclamation-point-8161d30cfabe446dae1fabfb920b0f58)
-
-## License
 MIT License

@@ -10,6 +10,8 @@ public class PassthroughCameraDisplay : MonoBehaviour
     public string textureName;
     public float quadDistance = 1;
 
+    private Vector3 originalScale;
+
     [SerializeField] private PassthroughCameraTaker passthroughCameraTaker;
 
     [Header("Debug")]
@@ -20,7 +22,7 @@ public class PassthroughCameraDisplay : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-
+        originalScale = quadRenderer.transform.localScale;
         quadRenderer.gameObject.SetActive(false);
         passthroughCameraTaker.onPictureTaken.AddListener(DisplayPhotoOnQuad);
     }
@@ -50,7 +52,7 @@ public class PassthroughCameraDisplay : MonoBehaviour
         Transform quadTransform = quadRenderer.transform;
 
         float ratio = (float)_currentPicture.height / (float)_currentPicture.width;
-        quadTransform.localScale = new Vector3(quadTransform.localScale.x, quadTransform.localScale.y * ratio, 1);
+        quadTransform.localScale = new Vector3(originalScale.x, originalScale.y * ratio, 1);
     }
 
     #region DEPRECATED METHODS
@@ -89,7 +91,7 @@ public class PassthroughCameraDisplay : MonoBehaviour
         float ratio = (float)_currentPicture.height / (float)_currentPicture.width;
         
         // maintain quadTransform scale but update ratio
-        quadTransform.localScale = new Vector3(quadTransform.localScale.x * quadScale, quadTransform.localScale.y * quadScale * ratio, 1);
+        quadTransform.localScale = new Vector3(originalScale.x * quadScale, originalScale.y * quadScale * ratio, 1);
     }
 #endif
     #endregion

@@ -164,7 +164,9 @@ Parsing failure will occur if:
 - Two components are grouped as a branch when only one route for current exists.
 
 #### 💡 Lightbulb Ordering Rule
-Lightbulbs (`L#`) must be placed **last** in both the `verbalPlan` and `formula`, **whenever this does not affect circuit behavior or Ohm's Law correctness**. This ensures readability and reinforces their visual role as output indicators. Reordering is only allowed if it does not modify the actual logical flow or break structural correctness (e.g., altering series/parallel logic).
+Lightbulbs (`L#`) must be placed **last** in both the `verbalPlan` and `formula`, as long as this does not break electrical correctness. This ordering is preferred and must be enforced unless the circuit would break.
+
+If the lightbulb is not the last physical component in the traced loop, it should still be moved to the end of the `verbalPlan` and `formula` **for readability** — as long as series/parallel grouping is not violated. This ensures consistent symbolic representation across examples and avoids confusion in visual-digital alignment.
 
 Examples:
 - ✅ Good: `V01 -> R01 + S01 || R02 -> L01`

@@ -23,6 +23,7 @@ namespace CircuitProcessor
         [SerializeField, ShowIf("testMode")] private List<TextAsset> testOutputs; // For testing purposes
         private int _testIndex;
         [Header("OpenAI Configuration")]
+        [SerializeField, HideIf("testMode")] private OpenAIConfiguration openAIConfiguration;
         private Model chatModel = Model.GPT4o; // Using GPT-4 with vision capabilities
 
         [Header("System Prompt")]
@@ -70,11 +71,22 @@ Now process the image using full one-pass mode and return the output JSON only."
         /// </summary>
         private void InitializeOpenAI()
         {
-
-            // NOTE: Created .openai file as mentioned in:
+            // NOTE: this implementation did not work when building for android
+            
+            // NOTE: Created .openai and added to Assets/StreamingAssets folder. (as mentioned in:
             // NOTE: https://github.com/RageAgainstThePixel/com.openai.unity?tab=readme-ov-file#load-key-from-configuration-file. 
-            // NOTE: Added to .gitignore
-            openAIClient = new OpenAIClient(new OpenAIAuthentication().LoadFromDirectory(Application.dataPath));
+            // NOTE: Added to .gitignore.
+            
+            string path = Path.Combine(Application.streamingAssetsPath, ".openai");
+            openAIClient = new OpenAIClient(new OpenAIAuthentication().LoadFromPath(path));
+            
+
+            /*
+            var auth = new OpenAIAuthentication(openAIConfiguration);
+            openAIClient = new OpenAIClient(auth);
+            //var settings = new OpenAISettings(openAIConfiguration);
+            //openAIClient = new OpenAIClient(auth, settings);
+            */
             Debug.Log("OpenAI Client initialized successfully.");
         }
 
@@ -334,7 +346,7 @@ Now process the image using full one-pass mode and return the output JSON only."
             {
                 foreach (var component in circuitData.components)
                 {
-                    result += $"     {component.id} ({component.type}) = {component.value}\n";
+                    result += $"     {component.id} ({component.type}) = {component.Value}\n";
                 }
             }
             XRDebugLogViewer.Log($"{result}", sendToXRDebugLogViewer, sendToDebugLog);

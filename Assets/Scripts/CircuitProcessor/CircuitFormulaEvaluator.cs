@@ -22,7 +22,7 @@ namespace CircuitProcessor
         [SerializeField] private bool sendToXRDebugLogViewer = true;
         [SerializeField] private bool sendToDebugLog = true;
         private CircuitData circuitData;
-        private Dictionary<string, double> componentValues;
+        private Dictionary<Component, double> componentValues = new ();
         public UnityEvent<float> OnCalculatingFormula;
 
         private float _intensity;
@@ -49,14 +49,29 @@ namespace CircuitProcessor
         /// </summary>
         public void RefreshComponentValues()
         {
-            XRDebugLogViewer.Log("CircuitFormulaEvaluator: Refreshing component values", sendToXRDebugLogViewer, sendToDebugLog);
-            componentValues = new Dictionary<string, double>();
-            foreach (var component in circuitData.components)
+            ClearComponentValues();
+            XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Refreshing component values - amount {circuitData.components.Count}", sendToXRDebugLogViewer, sendToDebugLog);
+            foreach (Component component in circuitData.components)
             {
-                componentValues[component.id] = (double)component.value;
-                XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Component {component.id} value set to {component.value}", sendToXRDebugLogViewer, sendToDebugLog);
+                componentValues.Add(component, (double)component.Value);
+                XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Component {component.id} value set to {component.Value}", sendToXRDebugLogViewer, sendToDebugLog);
             }
+            foreach (Component c in componentValues.Keys)
+            {
+                c.OnValueChanged.AddListener(UpdateComponentValue);
+            }
+            XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Refreshed component values - amount {componentValues.Keys.Count}", sendToXRDebugLogViewer, sendToDebugLog);
             EvaluateFormula();
+        }
+
+        private void ClearComponentValues()
+        {
+            foreach(var component in componentValues)
+            {
+                component.Key.OnValueChanged.RemoveListener(UpdateComponentValue);
+            }
+            componentValues.Clear();
+            XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Cleared component values", sendToXRDebugLogViewer, sendToDebugLog);
         }
 
         /// <summary>
@@ -113,33 +128,18 @@ namespace CircuitProcessor
         /// <summary>
         /// Updates a specific component's value and optionally recalculates the formula
         /// </summary>
-        /// <param name="componentId">The component ID to update</param>
-        /// <param name="newValue">The new value for the component</param>
-        /// <param name="updateCircuitData">Whether to update the original circuit data as well</param>
-        public void UpdateComponentValue(string componentId, float newValue, bool updateCircuitData = true)
+        /// <param name="component">The component to update</param>
+        public void UpdateComponentValue(Component component)
         {
-            XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Updating component {componentId} to value {newValue}", sendToXRDebugLogViewer, sendToDebugLog);
-            if (componentValues.ContainsKey(componentId))
+            XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Updating Formula component {component}", sendToXRDebugLogViewer, sendToDebugLog);
+            if (componentValues.ContainsKey(component))
             {
-                componentValues[componentId] = (double)newValue;
-
-                if (updateCircuitData)
-                {
-                    var component = circuitData.components.FirstOrDefault(c => c.id == componentId);
-                    if (component != null)
-                    {
-                        component.value = newValue;
-                        XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Circuit data updated for component {componentId}", sendToXRDebugLogViewer, sendToDebugLog);
-                    }
-                    else
-                    {
-                        XRDebugLogViewer.LogError($"CircuitFormulaEvaluator: Component {componentId} not found in circuit data");
-                    }
-                }
+                componentValues[component] = (double)component.Value;
+                EvaluateFormula();
             }
             else
             {
-                XRDebugLogViewer.LogError($"CircuitFormulaEvaluator: Component {componentId} not found in values dictionary");
+                XRDebugLogViewer.LogError($"CircuitFormulaEvaluator: Component {component} not found in values dictionary");
             }
         }
 
@@ -169,19 +169,21 @@ namespace CircuitProcessor
 
             // Sort component IDs by length (descending) to avoid partial matches
             // e.g., if we have R1 and R10, we want to replace R10 first
-            var sortedIds = componentValues.Keys.OrderByDescending(id => id.Length);
+            var sortedIds = componentValues.Keys.OrderByDescending(c => c.id);
+            XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Substituting values - number of components in circuitData: {componentValues.Keys.Count}", sendToXRDebugLogViewer, sendToDebugLog);
 
-            foreach (var componentId in sortedIds)
+            foreach (var component in sortedIds)
             {
-                double value = componentValues[componentId];
+                double value = componentValues[component];
+                string id = component.id;
 
                 // Use word boundary regex to ensure we only replace complete component IDs
-                string pattern = @"\b" + Regex.Escape(componentId) + @"\b";
+                string pattern = @"\b" + Regex.Escape(id) + @"\b";
 
                 // Format double values to handle scientific notation properly
                 string valueString = FormatDoubleForSubstitution(value);
                 result = Regex.Replace(result, pattern, valueString);
-                XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Replaced {componentId} with {valueString}", sendToXRDebugLogViewer, sendToDebugLog);
+                XRDebugLogViewer.Log($"CircuitFormulaEvaluator: Replaced {id} with {valueString}", sendToXRDebugLogViewer, sendToDebugLog);
             }
 
             return result;

@@ -47,11 +47,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayUI: {fileID: 7597704236960253461}
   displayText: {fileID: 9031353098022488220}
+  unitOfReference: 
   hasEditableUI: 1
   editableUI: {fileID: 7543060923406778240}
   editableType: 2
   editableDisplayUIText: {fileID: 8748046606304260161}
   editableOptions: {fileID: 232494050669761365}
+  initialOffset: 9.5
+  gridFactor: 1.5
+  OnComponentValueChanged:
+    m_PersistentCalls:
+      m_Calls: []
   toggle: {fileID: 3132351378028702939}
   toggleParent: {fileID: 6028745338432803301}
 --- !u!1 &3433847947354854239
@@ -189,6 +195,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7818810937515718076}
     m_Modifications:
+    - target: {fileID: 1267500383429390685, guid: 0dbc0a16103ce104cbb610b48f1f34bf, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2997758961760834800, guid: 0dbc0a16103ce104cbb610b48f1f34bf, type: 3}
       propertyPath: m_Name
       value: CircuitComponentUI
@@ -232,6 +242,30 @@ PrefabInstance:
     - target: {fileID: 5992567808795866970, guid: 0dbc0a16103ce104cbb610b48f1f34bf, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7532537674798295617, guid: 0dbc0a16103ce104cbb610b48f1f34bf, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7532537674798295617, guid: 0dbc0a16103ce104cbb610b48f1f34bf, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7532537674798295617, guid: 0dbc0a16103ce104cbb610b48f1f34bf, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 40
+      objectReference: {fileID: 0}
+    - target: {fileID: 7532537674798295617, guid: 0dbc0a16103ce104cbb610b48f1f34bf, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 24
+      objectReference: {fileID: 0}
+    - target: {fileID: 7532537674798295617, guid: 0dbc0a16103ce104cbb610b48f1f34bf, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 7532537674798295617, guid: 0dbc0a16103ce104cbb610b48f1f34bf, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -12
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

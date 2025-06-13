@@ -10026,13 +10026,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 733404029}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.32052204, y: -0.6302901, z: 0.32052198, w: 0.63029015}
+  m_LocalRotation: {x: 0.29343846, y: -0.6996877, z: 0.25193173, w: 0.6007175}
   m_LocalPosition: {x: -0.11, y: 0.44, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1146017775}
-  m_LocalEulerAnglesHint: {x: 53.909, y: -90, z: 0}
+  m_LocalEulerAnglesHint: {x: 44.837, y: -102.323, z: -8.756}
 --- !u!114 &733404031
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10069,7 +10069,7 @@ Light:
   m_Color: {r: 0.8196079, g: 0.8196079, b: 0.8196079, a: 1}
   m_Intensity: 1
   m_Range: 5
-  m_SpotAngle: 114.061
+  m_SpotAngle: 130.46936
   m_InnerSpotAngle: 69.296036
   m_CookieSize: 10
   m_Shadows:
@@ -15257,7 +15257,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 2b82a49172a5f754c8154bf0de623c6c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -19518,6 +19518,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1487398122}
   - component: {fileID: 1487398121}
+  - component: {fileID: 1487398124}
   - component: {fileID: 1487398123}
   m_Layer: 0
   m_Name: EventSystem
@@ -19587,6 +19588,21 @@ MonoBehaviour:
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
   m_ScrollDeltaPerTick: 6
+--- !u!114 &1487398124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1487398119}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2518c50cb3fc6a6458d4b743c2f69c7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SendPointerHoverToParent: 1
+  _useInitialPressPositionForDrag: 1
+  _exclusiveMode: 0
 --- !u!1 &1490010998
 GameObject:
   m_ObjectHideFlags: 0
@@ -22721,7 +22737,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3554242457587940683, guid: 8f403dcd176949148ab24331defe47fb, type: 3}
       propertyPath: disableLogs
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4330906035765342329, guid: 8f403dcd176949148ab24331defe47fb, type: 3}
       propertyPath: m_Name
@@ -22769,7 +22785,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5518670934586006478, guid: 8f403dcd176949148ab24331defe47fb, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 217
+      value: 217.0009
       objectReference: {fileID: 0}
     - target: {fileID: 6204767134508456339, guid: 8f403dcd176949148ab24331defe47fb, type: 3}
       propertyPath: m_AnchorMax.y
@@ -25158,10 +25174,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34d38290c46861a4e84af95822850636, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  testMode: 1
+  testMode: 0
   testOutputs:
   - {fileID: 4900000, guid: ea4866ebd1f853141ae9d3980376e5f1, type: 3}
   - {fileID: 4900000, guid: 8c48130548855284ba8bff73f085d276, type: 3}
+  openAIConfiguration: {fileID: 11400000, guid: b2d8f853b4c31244b99d877508e33866, type: 2}
   systemPromptFile: {fileID: 4900000, guid: 10df362a8f0d567468a61ee23aff2593, type: 3}
   sendToXRDebugLogViewer: 1
   sendToDebugLog: 1
@@ -25203,9 +25220,9 @@ Transform:
   m_GameObject: {fileID: 1862826178}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.08, y: 0.72, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: -1, y: 0.72, z: -0.15}
+  m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1245961437}
   m_Father: {fileID: 0}
@@ -26797,10 +26814,8 @@ MonoBehaviour:
   inputToTakePhoto: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   webcamManager: {fileID: 1373946501}
   debugFakePictureList:
-  - {fileID: 2800000, guid: e6f325aa1d257cb42b8af77913f27d80, type: 3}
-  - {fileID: 2800000, guid: b52d914ce824a974d9fcbb4e0c138bf5, type: 3}
-  - {fileID: 2800000, guid: 56ec014f4f0dea44fad175f013bcdc63, type: 3}
-  - {fileID: 2800000, guid: 92ee6fed88611084c928a0064aeac995, type: 3}
+  - {fileID: 2800000, guid: 31aaac626fba9424ebdb93b469db3f58, type: 3}
+  - {fileID: 2800000, guid: fb57e041b4eb0bd48a0a6403af9b0229, type: 3}
   onPictureTaken:
     m_PersistentCalls:
       m_Calls: []
