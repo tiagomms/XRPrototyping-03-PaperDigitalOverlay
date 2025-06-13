@@ -1,18 +1,21 @@
 # Electric Circuitry on Paper - XR Prototype
 
 ## 🔗 Quick Links
-- 🎥 [Demo Video](https://drive.google.com/drive/folders/1DpqpQhZ-8qEUeOk7zoXvyyg3w5n1P2eK?usp=sharing)
-- 📑 [Pitch Slides](https://docs.google.com/presentation/d/1LsEf7hn1IQdoLrYC37tWsQS3RmQxMj75_3sOZfT_LSI/edit?slide=id.g3591e20ec8f_1_572)
-- 🧪 [Prototype Template](https://docs.google.com/presentation/d/1xPvcyEnag4ImKNE3sgDFsOz5TSLzHkCcf3SfGvC89ek/edit?usp=sharing)
+- 🎥 [Demo Video](https://drive.google.com/file/d/1aiGPg8qhQ4PnUGLBZeQa8bGaMMoHUgkI/view?usp=sharing)
+- 📑 [APK (in test mode - no ChatGPT Integration)](https://drive.google.com/file/d/1CsbgUn9VQTUS14HMkUqLuYwGXlILZcuX/view?usp=sharing)
 - 💾 [GitHub Repo](https://github.com/tiagomms/XRPrototyping-03-PaperDigitalOverlay)
 
 ## 🧠 Overview
 
 This is my third one-week solo prototype for the XR Bootcamp XR Prototyping course (May–July 2025).
 
-**"Electric Circuitry on Paper"** explores the idea of digital overlays on top of hand-drawn electric circuit diagrams. Inspired by Aaditya Vaze's hackathon demo, I built a system where camera frames are used to detect a circuit and augment it with editable parameters. Users can adjust component values (like resistors) and observe real-time feedback through the brightness of a digital lightbulb.
+**"Electric Circuitry on Paper"** explores the idea of digital overlays on top of hand-drawn electric circuit diagrams. Inspired by [Aaditya Vaze's hackathon demo](https://www.linkedin.com/posts/aadityav_electronic-circuit-from-a-sketch-building-activity-7284585048605937665-_dhx), I built a system where camera frames are used to detect a circuit and augment it with editable parameters. Users can adjust component values (like resistors) and observe real-time feedback through the brightness of a digital lightbulb.
 
-The core question: What happens when pen-and-paper educational tools become interactive through XR?
+The core question: What happens when pen-and-paper educational diagrams become interactive through XR?
+
+## App Modes
+- Test Mode (default): picks up two json examples that chatGPT returned during my tests and generates the circuit from them
+- Prod Mode: with ChatGPT Integration (read Project Setup in how to setup it up)
 
 ## Project Setup (to use ChatGPT integration)
 1. Create your own OpenAIConfiguration file in the Resources folder. **Set the API Key value only (there is a bug when you set the other values)**.
@@ -53,8 +56,8 @@ The core question: What happens when pen-and-paper educational tools become inte
 
 ## 📚 Inspiration and References
 
-- Aaditya Vaze's hackathon: https://www.linkedin.com/posts/aadityav_electronic-circuit-from-a-sketch-building-activity-7284585048605937665-_dhx
-- Learnable Programming by Bret Victor: https://worrydream.com/LearnableProgramming/
+- [Aaditya Vaze's hackathon demo](https://www.linkedin.com/posts/aadityav_electronic-circuit-from-a-sketch-building-activity-7284585048605937665-_dhx)
+- [Learnable Programming by Bret Victor](https://worrydream.com/LearnableProgramming/)
 
 ## 🧪 Key Learnings
 
