@@ -1,7 +1,7 @@
-# Electric Circuitry on Paper - XR Prototype
+# Xtended Electric Circuits from Paper Diagrams - XR Prototype
 
 ## 🔗 Quick Links
-- 🎥 [Demo Video](https://drive.google.com/file/d/1aiGPg8qhQ4PnUGLBZeQa8bGaMMoHUgkI/view?usp=sharing)
+- 🎥 [Demo Video (version without working UI)](https://drive.google.com/file/d/1aiGPg8qhQ4PnUGLBZeQa8bGaMMoHUgkI/view?usp=sharing)
 - 📑 [APK (in test mode - no ChatGPT Integration)](https://drive.google.com/file/d/1CsbgUn9VQTUS14HMkUqLuYwGXlILZcuX/view?usp=sharing)
 - 💾 [GitHub Repo](https://github.com/tiagomms/XRPrototyping-03-PaperDigitalOverlay)
 
@@ -19,7 +19,8 @@ The core question: What happens when pen-and-paper educational diagrams become i
 
 ## Project Setup (to use ChatGPT integration)
 1. Create your own OpenAIConfiguration file in the Resources folder. **Set the API Key value only (there is a bug when you set the other values)**.
-2. Go to Scenes > ElectricalCircuitOverlay. Open CircuitWorkshop gameObject, change the CircuitAnalyzer script to **not test mode** and assign your OpenAIConfiguration file
+2. Go to Chatgpt api, create an app as shown in this [Valem Tutorial](https://youtu.be/cue4DIdduUU?si=yzdvv_SG3Uwcr4Bx&t=141)
+3. Go to Scenes > ElectricalCircuitOverlay. Open CircuitWorkshop gameObject, change the CircuitAnalyzer script to **not test mode** and assign your OpenAIConfiguration file
 
 ![How to create OpenAIConfiguration file](./Images/SetupOpenAIConfigurationResources.gif)
 
@@ -35,14 +36,16 @@ The core question: What happens when pen-and-paper educational diagrams become i
 - Working MR UI (although clunky)
 
 ## 🌟 Next Steps
+- Update demo video with working MR UI 
 - Hand Tracking (hand menu to take photos and place a camera frame)
+- Improve Formula layout for easier reading and accurate Intensity/Voltage math on parallel branches
 - Design the idea on ShapesXR (right now my circuit workshop is too big)
 - Occlusion vs no occlusion (test it out - again in ShapesXR)
 - Improve MR UI (probably unifying canvas for changing instead of multiple canvas)
   - Read: https://developers.meta.com/horizon/documentation/unity/unity-isdk-direct-touch/ for starters
-- Improve Formula layout for easier reading
+- Add "flow" particles representing intensity in real time - following the wires
 - Enforce limits to avoid unrealistic values
-- Support more complex components (transistors, condensors)
+- Support more complex components (transistors, condensors), and more intricate circuits (more parallel branches, forks and merges) with a tree branch json output for more complex wiring
 - Clean UI for sliders (log scale for resistors)
 - Faster AI processing times: perhaps Unity Grok integration?
 - Real overlay aligned on actual paper diagram
